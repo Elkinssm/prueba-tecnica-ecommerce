@@ -1,4 +1,4 @@
-package org.example.pruebatecnicaecommerce.domain.model.Order;
+package org.example.pruebatecnicaecommerce.domain.model.order;
 
 import lombok.Value;
 

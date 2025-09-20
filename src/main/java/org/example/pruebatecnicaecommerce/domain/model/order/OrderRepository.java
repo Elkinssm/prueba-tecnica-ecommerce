@@ -1,4 +1,4 @@
-package org.example.pruebatecnicaecommerce.domain.model.Order;
+package org.example.pruebatecnicaecommerce.domain.model.order;
 
 import java.util.List;
 import java.util.Optional;

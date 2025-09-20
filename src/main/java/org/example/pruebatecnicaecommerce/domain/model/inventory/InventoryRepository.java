@@ -1,4 +1,6 @@
-package org.example.pruebatecnicaecommerce.domain.model.Inventory;
+package org.example.pruebatecnicaecommerce.domain.model.inventory;
+
+import org.example.pruebatecnicaecommerce.domain.inventory.Inventory;
 
 import java.util.Optional;
 

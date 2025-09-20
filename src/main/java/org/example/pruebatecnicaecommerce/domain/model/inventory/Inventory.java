@@ -24,6 +24,10 @@ public class Inventory {
         return new Inventory(productId, initialStock, 0);
     }
 
+    public static Inventory restore(String productId, int stock, long version) {
+        return new Inventory(productId, stock, version);
+    }
+
     public void reserve(int quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Quantity must be greater than zero");
