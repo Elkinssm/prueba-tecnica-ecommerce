@@ -1,4 +1,4 @@
-package org.example.pruebatecnicaecommerce.domain.model.Order;
+package org.example.pruebatecnicaecommerce.domain.model.order;
 
 import lombok.Getter;
 
@@ -17,18 +17,16 @@ public class Order {
     private long version;
     private final List<OrderItem> items = new ArrayList<>();
 
-    // Constructor privado → obliga a usar el factory
+
     private Order(UUID id, String customerId, OrderStatus status,
-                  Instant createdAt, long version, List<OrderItem> items) {
+                  Instant createdAt, long version) {
         this.id = id;
         this.customerId = customerId;
         this.status = status;
         this.createdAt = createdAt;
         this.version = version;
-        if (items != null) {
-            this.items.addAll(items);
-        }
     }
+
 
     public static Order create(String customerId) {
         return new Order(
@@ -36,14 +34,21 @@ public class Order {
                 customerId,
                 OrderStatus.CREATED,
                 Instant.now(),
-                0,
-                new ArrayList<>()
+                0
         );
     }
 
+
+    public static Order restore(UUID id, String customerId, OrderStatus status,
+                                Instant createdAt, long version) {
+        return new Order(id, customerId, status, createdAt, version);
+    }
+
+
+
     public void addItem(OrderItem item) {
         if (status != OrderStatus.CREATED) {
-            throw new IllegalStateException("Cannot add items once order is not in CREATED status");
+            throw new IllegalStateException("No se pueden agregar ítems cuando la orden ya no está en estado CREATED");
         }
         this.items.add(item);
     }
@@ -51,7 +56,7 @@ public class Order {
     public void changeStatus(OrderStatus next) {
         if (!this.status.canTransitionTo(next)) {
             throw new IllegalStateException(
-                    "Invalid transition from " + this.status + " to " + next
+                    "Transición inválida de " + this.status + " a " + next
             );
         }
         this.status = next;

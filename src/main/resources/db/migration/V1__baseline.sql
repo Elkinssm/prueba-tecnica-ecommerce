@@ -7,12 +7,20 @@ CREATE TABLE IF NOT EXISTS orders (
 );
 
 CREATE TABLE IF NOT EXISTS order_items (
-    id BIGINT PRIMARY KEY,
+    id VARCHAR(36) PRIMARY KEY,
     order_id VARCHAR(36) NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     product_id VARCHAR(255) NOT NULL,
     quantity INT NOT NULL,
     unit_price NUMERIC(19,2) NOT NULL
-);
+    );
+
+
+CREATE TABLE IF NOT EXISTS inventory (
+    product_id VARCHAR(255) PRIMARY KEY,
+    stock INT NOT NULL,
+    version BIGINT DEFAULT 0 NOT NULL
+    );
+
 
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
