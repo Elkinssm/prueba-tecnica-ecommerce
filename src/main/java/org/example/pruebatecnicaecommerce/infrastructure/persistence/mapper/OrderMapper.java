@@ -1,7 +1,5 @@
 package org.example.pruebatecnicaecommerce.infrastructure.persistence.mapper;
 
-
-
 import org.example.pruebatecnicaecommerce.domain.model.order.Order;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderItem;
 import org.example.pruebatecnicaecommerce.infrastructure.persistence.order.OrderEntity;
@@ -19,9 +17,11 @@ public class OrderMapper {
         entity.setStatus(order.getStatus());
         entity.setCreatedAt(order.getCreatedAt());
         entity.setVersion(order.getVersion());
+
         entity.setItems(order.getItems().stream()
                 .map(item -> toItemEntity(item, entity))
                 .collect(Collectors.toList()));
+
         return entity;
     }
 
@@ -33,9 +33,15 @@ public class OrderMapper {
                 entity.getCreatedAt(),
                 entity.getVersion()
         );
-        entity.getItems().forEach(item -> order.addItem(
-                new OrderItem(item.getProductId(), item.getQuantity(), item.getUnitPrice())
-        ));
+
+        entity.getItems().forEach(item ->
+                order.addItem(new OrderItem(
+                        item.getProductId(),
+                        item.getQuantity(),
+                        item.getUnitPrice()
+                ))
+        );
+
         return order;
     }
 

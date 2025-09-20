@@ -1,30 +1,27 @@
-package org.example.pruebatecnicaecommerce.domain.inventory;
+package org.example.pruebatecnicaecommerce.domain.model.inventory;
 
 import lombok.Getter;
 
+import java.util.UUID;
+
 @Getter
 public class Inventory {
-    private final String productId;
+    private final UUID productId;
     private int stock;
     private long version;
 
-    private Inventory(String productId, int stock, long version) {
-        if (productId == null || productId.isBlank()) {
-            throw new IllegalArgumentException("ProductId cannot be null or blank");
-        }
-        if (stock < 0) {
-            throw new IllegalArgumentException("Stock cannot be negative");
-        }
+    private Inventory(UUID productId, int stock, long version) {
+        if (stock < 0) throw new IllegalArgumentException("Stock cannot be negative");
         this.productId = productId;
         this.stock = stock;
         this.version = version;
     }
 
-    public static Inventory create(String productId, int initialStock) {
+    public static Inventory create(UUID productId, int initialStock) {
         return new Inventory(productId, initialStock, 0);
     }
 
-    public static Inventory restore(String productId, int stock, long version) {
+    public static Inventory restore(UUID productId, int stock, long version) {
         return new Inventory(productId, stock, version);
     }
 

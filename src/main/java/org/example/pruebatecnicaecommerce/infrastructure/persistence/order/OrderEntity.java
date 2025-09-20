@@ -21,9 +21,10 @@ public class OrderEntity {
     @Id
     private UUID id;
 
-    private String customerId;
+    private UUID customerId;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private OrderStatus status;
 
     private Instant createdAt;

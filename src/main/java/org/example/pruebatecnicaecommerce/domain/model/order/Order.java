@@ -11,14 +11,14 @@ import java.util.UUID;
 @Getter
 public class Order {
     private final UUID id;
-    private final String customerId;
+    private final UUID customerId;
     private OrderStatus status;
     private final Instant createdAt;
     private long version;
     private final List<OrderItem> items = new ArrayList<>();
 
 
-    private Order(UUID id, String customerId, OrderStatus status,
+    private Order(UUID id, UUID customerId, OrderStatus status,
                   Instant createdAt, long version) {
         this.id = id;
         this.customerId = customerId;
@@ -28,7 +28,7 @@ public class Order {
     }
 
 
-    public static Order create(String customerId) {
+    public static Order create(UUID customerId) {
         return new Order(
                 UUID.randomUUID(),
                 customerId,
@@ -39,7 +39,7 @@ public class Order {
     }
 
 
-    public static Order restore(UUID id, String customerId, OrderStatus status,
+    public static Order restore(UUID id, UUID customerId, OrderStatus status,
                                 Instant createdAt, long version) {
         return new Order(id, customerId, status, createdAt, version);
     }

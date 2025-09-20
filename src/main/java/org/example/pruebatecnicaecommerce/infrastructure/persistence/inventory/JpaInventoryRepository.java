@@ -2,6 +2,10 @@ package org.example.pruebatecnicaecommerce.infrastructure.persistence.inventory;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface JpaInventoryRepository extends JpaRepository<InventoryEntity, String> {
+import java.util.Optional;
+import java.util.UUID;
 
+public interface JpaInventoryRepository extends JpaRepository<InventoryEntity, UUID> {
+    Optional<InventoryEntity> findByProductId(UUID productId);
 }
+
