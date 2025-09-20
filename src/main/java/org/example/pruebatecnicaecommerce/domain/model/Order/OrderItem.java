@@ -1,4 +1,4 @@
-package org.example.pruebatecnicaecommerce.domain.model;
+package org.example.pruebatecnicaecommerce.domain.model.Order;
 
 import lombok.Value;
 
@@ -7,9 +7,9 @@ import java.math.BigDecimal;
 @Value
 public class OrderItem {
 
-    private final String productId;
-    private final int quantity;
-    private final BigDecimal unitPrice;
+    String productId;
+    int quantity;
+    BigDecimal unitPrice;
 
     public OrderItem(String productId, int quantity, BigDecimal unitPrice) {
         if (quantity <= 0) {

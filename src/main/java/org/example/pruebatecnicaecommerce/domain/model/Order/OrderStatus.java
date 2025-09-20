@@ -1,4 +1,4 @@
-package org.example.pruebatecnicaecommerce.domain.model;
+package org.example.pruebatecnicaecommerce.domain.model.Order;
 
 public enum OrderStatus {
     CREATED,PAID,SHIPPED,DELIVERED,CANCELLED;
@@ -8,9 +8,7 @@ public enum OrderStatus {
             case CREATED -> newStatus == PAID || newStatus == CANCELLED;
             case PAID -> newStatus == SHIPPED || newStatus == CANCELLED;
             case SHIPPED -> newStatus == DELIVERED;
-            case DELIVERED -> false;
-            case CANCELLED -> false;
-            default -> false;
+            case DELIVERED, CANCELLED -> false;
         };
     }
 }
