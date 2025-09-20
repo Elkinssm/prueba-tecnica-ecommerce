@@ -1,14 +1,17 @@
 package org.example.pruebatecnicaecommerce.infrastructure.persistence.mapper;
 
-import org.example.pruebatecnicaecommerce.domain.inventory.Inventory;
+
+import org.example.pruebatecnicaecommerce.domain.model.inventory.Inventory;
 import org.example.pruebatecnicaecommerce.infrastructure.persistence.inventory.InventoryEntity;
+
+import java.util.UUID;
 
 
 public class InventoryMapper {
 
     public static InventoryEntity toEntity(Inventory inventory) {
         InventoryEntity entity = new InventoryEntity();
-        entity.setProductId(inventory.getProductId());
+        entity.setProductId(inventory.getProductId().toString());
         entity.setStock(inventory.getStock());
         entity.setVersion(inventory.getVersion());
         return entity;
@@ -16,7 +19,7 @@ public class InventoryMapper {
 
     public static Inventory toDomain(InventoryEntity entity) {
         return Inventory.restore(
-                entity.getProductId(),
+                UUID.fromString(entity.getProductId()),
                 entity.getStock(),
                 entity.getVersion()
         );

@@ -3,15 +3,16 @@ package org.example.pruebatecnicaecommerce.domain.model.order;
 import lombok.Value;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Value
 public class OrderItem {
 
-    String productId;
+    UUID productId;
     int quantity;
     BigDecimal unitPrice;
 
-    public OrderItem(String productId, int quantity, BigDecimal unitPrice) {
+    public OrderItem(UUID productId, int quantity, BigDecimal unitPrice) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Quantity must be positive");
         }

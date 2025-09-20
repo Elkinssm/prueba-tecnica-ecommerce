@@ -19,7 +19,7 @@ public class OrderItemEntity {
     @GeneratedValue
     private UUID id;
 
-    private String productId;
+    private UUID productId;
 
     private int quantity;
 
