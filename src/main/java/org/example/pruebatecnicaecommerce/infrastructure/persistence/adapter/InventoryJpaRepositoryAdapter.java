@@ -27,20 +27,16 @@ public class InventoryJpaRepositoryAdapter implements InventoryRepository {
 
     @Override
     public void save(Inventory inventory) {
-        // Buscar entidad existente por productId
         InventoryEntity entity = jpaRepository.findByProductId(inventory.getProductId())
                 .orElseGet(() -> {
-                    // Si no existe, crear nueva entidad
                     InventoryEntity newEntity = new InventoryEntity();
                     newEntity.setProductId(inventory.getProductId());
                     return newEntity;
                 });
 
-        // Actualizar valores
         entity.setStock(inventory.getStock());
         entity.setVersion(inventory.getVersion());
 
-        // Guardar
         jpaRepository.save(entity);
     }
 }

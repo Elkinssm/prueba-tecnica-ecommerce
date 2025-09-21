@@ -12,7 +12,6 @@ public final class PublicIdGenerator {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private PublicIdGenerator() {
-        // Utility class
     }
 
     /**
