@@ -2,7 +2,7 @@ package org.example.pruebatecnicaecommerce.shared.error;
 
 import lombok.Value;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 /**
  * Standard error response DTO
@@ -11,11 +11,11 @@ import java.time.Instant;
 public class ErrorResponse {
     String code;
     String message;
-    Instant timestamp;
+    LocalDateTime timestamp;
 
     public ErrorResponse(String code, String message) {
         this.code = code;
         this.message = message;
-        this.timestamp = Instant.now();
+        this.timestamp = LocalDateTime.now();
     }
 }
