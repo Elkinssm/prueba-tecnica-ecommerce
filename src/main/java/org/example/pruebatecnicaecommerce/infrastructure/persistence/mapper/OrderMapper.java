@@ -17,7 +17,7 @@ public class OrderMapper {
         entity.setCustomerId(order.getCustomerId());
         entity.setStatus(order.getStatus());
         entity.setCreatedAt(order.getCreatedAt());
-                entity.setItems(order.getItems().stream()
+        entity.setItems(order.getItems().stream()
                 .map(item -> toItemEntity(item, entity))
                 .collect(Collectors.toList()));
         return entity;

@@ -17,8 +17,8 @@ public class User {
     private final Instant createdAt;
     private long version;
 
-    private User(UUID id, String publicId, String username, String email, 
-                String passwordHash, UserRole role, Instant createdAt, long version) {
+    private User(UUID id, String publicId, String username, String email,
+            String passwordHash, UserRole role, Instant createdAt, long version) {
         this.id = id;
         this.publicId = publicId;
         this.username = username;
@@ -42,7 +42,7 @@ public class User {
     }
 
     public static User restore(UUID id, String publicId, String username, String email,
-                              String passwordHash, UserRole role, Instant createdAt, long version) {
+            String passwordHash, UserRole role, Instant createdAt, long version) {
         return new User(id, publicId, username, email, passwordHash, role, createdAt, version);
     }
 
