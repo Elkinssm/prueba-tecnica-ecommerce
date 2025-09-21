@@ -36,6 +36,16 @@ public final class PublicIdGenerator {
         return String.format("INV-%s-%s", date, random);
     }
 
+    /**
+     * Generates a user-friendly user ID
+     * Format: USR-YYYYMMDD-XXXX
+     */
+    public static String generateUserId() {
+        String date = LocalDate.now().format(DATE_FORMAT);
+        String random = generateRandomAlphanumeric(4);
+        return String.format("USR-%s-%s", date, random);
+    }
+
     private static String generateRandomAlphanumeric(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder result = new StringBuilder();
