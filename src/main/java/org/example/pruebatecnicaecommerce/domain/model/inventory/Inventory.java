@@ -1,6 +1,7 @@
 package org.example.pruebatecnicaecommerce.domain.model.inventory;
 
 import lombok.Getter;
+import org.example.pruebatecnicaecommerce.shared.error.InsufficientStockException;
 
 import java.util.UUID;
 
@@ -11,7 +12,8 @@ public class Inventory {
     private long version;
 
     private Inventory(UUID productId, int stock, long version) {
-        if (stock < 0) throw new IllegalArgumentException("Stock cannot be negative");
+        if (stock < 0)
+            throw new IllegalArgumentException("Stock cannot be negative");
         this.productId = productId;
         this.stock = stock;
         this.version = version;
@@ -30,7 +32,7 @@ public class Inventory {
             throw new IllegalArgumentException("Quantity must be greater than zero");
         }
         if (stock < quantity) {
-            throw new IllegalStateException("Not enough stock to reserve");
+            throw new InsufficientStockException(productId.toString(), quantity, stock);
         }
         this.stock -= quantity;
     }

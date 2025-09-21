@@ -7,34 +7,26 @@ import org.example.pruebatecnicaecommerce.application.dto.OrderResponseMapper;
 import org.example.pruebatecnicaecommerce.domain.model.order.Order;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderItem;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderRepository;
+import org.example.pruebatecnicaecommerce.shared.utils.UuidUtils;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class CreateOrderService {
 
     private final OrderRepository orderRepository;
 
-    public CreateOrderService(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
-    }
-
     public OrderResponse execute(CreateOrderRequest request) {
-        Order order = Order.create(UUID.fromString(request.getCustomerId()));
+        Order order = Order.create(UuidUtils.fromString(request.getCustomerId()));
 
-        request.getItems().forEach(item ->
-                order.addItem(new OrderItem(
-                        UUID.fromString(item.getProductId()),
-                        item.getQuantity(),
-                        item.getUnitPrice()
-                ))
-        );
+        request.getItems().forEach(item -> order.addItem(new OrderItem(
+                UuidUtils.fromString(item.getProductId()),
+                item.getQuantity(),
+                item.getUnitPrice())));
 
-        orderRepository.save(order);
-
-        return OrderResponseMapper.fromDomain(order);
+        Order savedOrder = orderRepository.save(order);
+        return OrderResponseMapper.fromDomain(savedOrder);
     }
-
-
 }

@@ -5,7 +5,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface OrderRepository {
-    void save(Order order);
+    Order save(Order order);
+
     Optional<Order> findById(UUID orderId);
-    List<Order> findByCustomerId(String customerId);
+
+    Optional<Order> findByPublicId(String publicId); // Nuevo método para API amigable
+
+    List<Order> findByCustomerId(UUID customerId);
+
+    List<Order> findAll();
 }
