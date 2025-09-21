@@ -11,7 +11,7 @@ public class InventoryMapper {
 
     public static InventoryEntity toEntity(Inventory inventory) {
         InventoryEntity entity = new InventoryEntity();
-        entity.setProductId(inventory.getProductId().toString());
+        entity.setProductId(inventory.getProductId());
         entity.setStock(inventory.getStock());
         entity.setVersion(inventory.getVersion());
         return entity;
@@ -19,7 +19,7 @@ public class InventoryMapper {
 
     public static Inventory toDomain(InventoryEntity entity) {
         return Inventory.restore(
-                UUID.fromString(entity.getProductId()),
+                entity.getProductId(),
                 entity.getStock(),
                 entity.getVersion()
         );

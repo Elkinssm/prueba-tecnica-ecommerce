@@ -14,19 +14,17 @@ public class OrderResponseMapper {
                 .collect(Collectors.toList());
 
         return new OrderResponse(
-                order.getId().toString(),
+                order.getPublicId(), // Usar publicId en lugar de UUID para la API
                 order.getCustomerId().toString(),
                 order.getStatus().name(),
                 order.getCreatedAt(),
-                items
-        );
+                items);
     }
 
     private static ItemResponse fromDomainItem(OrderItem item) {
         return new ItemResponse(
                 item.getProductId().toString(),
                 item.getQuantity(),
-                item.getUnitPrice()
-        );
+                item.getUnitPrice());
     }
 }

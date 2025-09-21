@@ -13,34 +13,41 @@ public class OrderMapper {
     public static OrderEntity toEntity(Order order) {
         OrderEntity entity = new OrderEntity();
         entity.setId(order.getId());
+        entity.setPublicId(order.getPublicId());
         entity.setCustomerId(order.getCustomerId());
         entity.setStatus(order.getStatus());
         entity.setCreatedAt(order.getCreatedAt());
-        entity.setVersion(order.getVersion());
-
-        entity.setItems(order.getItems().stream()
+                entity.setItems(order.getItems().stream()
                 .map(item -> toItemEntity(item, entity))
                 .collect(Collectors.toList()));
-
         return entity;
+    }
+
+    public static void updateEntity(OrderEntity entity, Order order) {
+        entity.setCustomerId(order.getCustomerId());
+        entity.setPublicId(order.getPublicId());
+        entity.setStatus(order.getStatus());
+        entity.setCreatedAt(order.getCreatedAt());
+
+        entity.getItems().clear();
+        entity.getItems().addAll(order.getItems().stream()
+                .map(item -> toItemEntity(item, entity))
+                .collect(Collectors.toList()));
     }
 
     public static Order toDomain(OrderEntity entity) {
         Order order = Order.restore(
                 entity.getId(),
+                entity.getPublicId(),
                 entity.getCustomerId(),
                 entity.getStatus(),
                 entity.getCreatedAt(),
-                entity.getVersion()
-        );
+                entity.getVersion());
 
-        entity.getItems().forEach(item ->
-                order.addItem(new OrderItem(
-                        item.getProductId(),
-                        item.getQuantity(),
-                        item.getUnitPrice()
-                ))
-        );
+        entity.getItems().forEach(item -> order.restoreItem(new OrderItem(
+                item.getProductId(),
+                item.getQuantity(),
+                item.getUnitPrice())));
 
         return order;
     }

@@ -2,9 +2,9 @@ package org.example.pruebatecnicaecommerce.infrastructure.persistence.adapter;
 
 import lombok.RequiredArgsConstructor;
 
-
 import org.example.pruebatecnicaecommerce.domain.model.inventory.Inventory;
 import org.example.pruebatecnicaecommerce.domain.model.inventory.InventoryRepository;
+import org.example.pruebatecnicaecommerce.infrastructure.persistence.inventory.InventoryEntity;
 import org.example.pruebatecnicaecommerce.infrastructure.persistence.inventory.JpaInventoryRepository;
 import org.example.pruebatecnicaecommerce.infrastructure.persistence.mapper.InventoryMapper;
 
@@ -17,8 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class InventoryJpaRepositoryAdapter implements InventoryRepository {
 
-
-      private final JpaInventoryRepository jpaRepository;
+    private final JpaInventoryRepository jpaRepository;
 
     @Override
     public Optional<Inventory> findByProductId(UUID productId) {
@@ -28,6 +27,20 @@ public class InventoryJpaRepositoryAdapter implements InventoryRepository {
 
     @Override
     public void save(Inventory inventory) {
-        jpaRepository.save(InventoryMapper.toEntity(inventory));
+        // Buscar entidad existente por productId
+        InventoryEntity entity = jpaRepository.findByProductId(inventory.getProductId())
+                .orElseGet(() -> {
+                    // Si no existe, crear nueva entidad
+                    InventoryEntity newEntity = new InventoryEntity();
+                    newEntity.setProductId(inventory.getProductId());
+                    return newEntity;
+                });
+
+        // Actualizar valores
+        entity.setStock(inventory.getStock());
+        entity.setVersion(inventory.getVersion());
+
+        // Guardar
+        jpaRepository.save(entity);
     }
 }
