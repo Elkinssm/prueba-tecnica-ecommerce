@@ -14,11 +14,12 @@ public class OrderResponseMapper {
                 .collect(Collectors.toList());
 
         return new OrderResponse(
-                order.getPublicId(), // Usar publicId en lugar de UUID para la API
+                order.getPublicId(),
                 order.getCustomerId().toString(),
                 order.getStatus().name(),
                 order.getCreatedAt(),
-                items);
+                items,
+                order.getTotal());
     }
 
     private static ItemResponse fromDomainItem(OrderItem item) {
