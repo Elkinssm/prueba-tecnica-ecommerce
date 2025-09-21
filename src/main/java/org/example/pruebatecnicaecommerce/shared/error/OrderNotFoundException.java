@@ -10,4 +10,8 @@ public class OrderNotFoundException extends DomainException {
     public OrderNotFoundException(UUID orderId) {
         super("Order not found with ID: " + orderId);
     }
+
+    public OrderNotFoundException(String publicOrderId) {
+        super("Order not found with public ID: " + publicOrderId);
+    }
 }

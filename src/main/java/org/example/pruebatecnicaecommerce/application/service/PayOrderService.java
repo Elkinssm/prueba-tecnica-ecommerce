@@ -22,7 +22,7 @@ public class PayOrderService {
 
     public OrderResponse execute(String publicOrderId) {
         Order order = orderRepository.findByPublicId(publicOrderId)
-                .orElseThrow(() -> new OrderNotFoundException(null)); // TODO: Ajustar excepción para publicId
+                .orElseThrow(() -> new OrderNotFoundException(publicOrderId));
 
         order.getItems().forEach(item -> {
             Inventory inventory = inventoryRepository.findByProductId(item.getProductId())

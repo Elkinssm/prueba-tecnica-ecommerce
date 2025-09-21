@@ -13,7 +13,7 @@ import java.util.UUID;
 @Getter
 public class Order {
     private final UUID id;
-    private final String publicId; // ID amigable para API
+    private final String publicId;
     private final UUID customerId;
     private OrderStatus status;
     private final Instant createdAt;
@@ -33,7 +33,7 @@ public class Order {
     public static Order create(UUID customerId) {
         return new Order(
                 UUID.randomUUID(),
-                PublicIdGenerator.generateOrderId(), // ID amigable generado
+                PublicIdGenerator.generateOrderId(),
                 customerId,
                 OrderStatus.CREATED,
                 Instant.now(),
