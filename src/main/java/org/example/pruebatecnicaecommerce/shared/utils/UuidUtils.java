@@ -13,7 +13,6 @@ public final class UuidUtils {
     private static final Pattern UUID_PATTERN = Pattern.compile(UUID_REGEX);
 
     private UuidUtils() {
-        // Utility class
     }
 
     /**

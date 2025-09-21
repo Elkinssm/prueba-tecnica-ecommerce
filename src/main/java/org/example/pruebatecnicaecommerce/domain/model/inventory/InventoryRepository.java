@@ -1,7 +1,5 @@
 package org.example.pruebatecnicaecommerce.domain.model.inventory;
 
-
-
 import java.util.Optional;
 import java.util.UUID;
 

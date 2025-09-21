@@ -54,8 +54,6 @@ public class Order {
         this.items.add(item);
     }
 
-    // Método especial para restaurar items desde persistencia sin validación de
-    // estado
     public void restoreItem(OrderItem item) {
         this.items.add(item);
     }

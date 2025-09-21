@@ -40,3 +40,7 @@ logging:
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
     org.example.pruebatecnicaecommerce: INFO
+
+jwt:
+  secret: myVerySecretKeyForJWTAuthenticationThatMustBeAtLeast256BitsLong
+  expiration: 86400
