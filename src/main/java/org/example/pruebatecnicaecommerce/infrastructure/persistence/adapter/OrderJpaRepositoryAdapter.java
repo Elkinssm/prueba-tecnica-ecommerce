@@ -2,13 +2,14 @@ package org.example.pruebatecnicaecommerce.infrastructure.persistence.adapter;
 
 import lombok.RequiredArgsConstructor;
 import org.example.pruebatecnicaecommerce.domain.model.order.Order;
-
+import org.example.pruebatecnicaecommerce.domain.model.order.OrderStatus;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderRepository;
 import org.example.pruebatecnicaecommerce.infrastructure.persistence.mapper.OrderMapper;
 import org.example.pruebatecnicaecommerce.infrastructure.persistence.order.OrderEntity;
 import org.example.pruebatecnicaecommerce.infrastructure.persistence.order.JpaOrderRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -59,6 +60,27 @@ public class OrderJpaRepositoryAdapter implements OrderRepository {
     @Override
     public List<Order> findAll() {
         return jpaRepository.findAll().stream()
+                .map(OrderMapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Order> findByStatus(OrderStatus status) {
+        return jpaRepository.findByStatus(status).stream()
+                .map(OrderMapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Order> findByCreatedAtBetween(Instant start, Instant end) {
+        return jpaRepository.findByCreatedAtBetween(start, end).stream()
+                .map(OrderMapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Order> findByCustomerIdAndStatus(UUID customerId, OrderStatus status) {
+        return jpaRepository.findByCustomerIdAndStatus(customerId, status).stream()
                 .map(OrderMapper::toDomain)
                 .collect(Collectors.toList());
     }

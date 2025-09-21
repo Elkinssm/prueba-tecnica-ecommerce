@@ -11,8 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
-public class ShipOrderService {
+@Transactional(readOnly = true)
+public class GetOrderService {
 
     private final OrderRepository orderRepository;
 
@@ -20,9 +20,6 @@ public class ShipOrderService {
         Order order = orderRepository.findByPublicId(publicOrderId)
                 .orElseThrow(() -> new OrderNotFoundException(publicOrderId));
 
-        order.ship();
-        Order savedOrder = orderRepository.save(order);
-
-        return OrderResponseMapper.fromDomain(savedOrder);
+        return OrderResponseMapper.fromDomain(order);
     }
 }

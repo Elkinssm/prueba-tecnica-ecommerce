@@ -5,24 +5,22 @@ import org.example.pruebatecnicaecommerce.application.dto.OrderResponse;
 import org.example.pruebatecnicaecommerce.application.dto.OrderResponseMapper;
 import org.example.pruebatecnicaecommerce.domain.model.order.Order;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderRepository;
-import org.example.pruebatecnicaecommerce.shared.error.OrderNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
-@Transactional
-public class ShipOrderService {
+@Transactional(readOnly = true)
+public class ListOrdersService {
 
     private final OrderRepository orderRepository;
 
-    public OrderResponse execute(String publicOrderId) {
-        Order order = orderRepository.findByPublicId(publicOrderId)
-                .orElseThrow(() -> new OrderNotFoundException(publicOrderId));
-
-        order.ship();
-        Order savedOrder = orderRepository.save(order);
-
-        return OrderResponseMapper.fromDomain(savedOrder);
+    public List<OrderResponse> execute() {
+        List<Order> orders = orderRepository.findAll();
+        return orders.stream()
+                .map(OrderResponseMapper::fromDomain)
+                .toList();
     }
 }

@@ -23,7 +23,7 @@ public class CancelOrderService {
 
     public OrderResponse execute(String publicOrderId) {
         Order order = orderRepository.findByPublicId(publicOrderId)
-                .orElseThrow(() -> new OrderNotFoundException(null)); // TODO: Ajustar excepción
+                .orElseThrow(() -> new OrderNotFoundException(publicOrderId));
 
         if (order.getStatus() == OrderStatus.PAID) {
             order.getItems().forEach(item -> {
