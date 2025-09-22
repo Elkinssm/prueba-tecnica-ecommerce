@@ -1,0 +1,76 @@
+@startuml architecture_diagram
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+skinparam component {
+  BackgroundColor<<rest>> #E3F2FD
+  BackgroundColor<<app>> #E8F5E9
+  BackgroundColor<<domain>> #FFF3E0
+  BackgroundColor<<infra>> #F3E5F5
+}
+
+package "Capa REST (REST API)" {
+  component (OrderController) <<rest>>
+  component (InventoryController) <<rest>>
+  component (CacheController) <<rest>>
+}
+
+package "Servicios de aplicación" {
+  component (CreateOrderService) <<app>>
+  component (PayOrderService) <<app>>
+  component (CancelOrderService) <<app>>
+  component (ShipOrderService) <<app>>
+  component (SearchOrdersService) <<app>>
+  component (ListInventoryService) <<app>>
+}
+
+package "Dominio" {
+  component (Order) <<domain>>
+  component (Inventory) <<domain>>
+  component (OrderRepository) <<domain>>
+  component (InventoryRepository) <<domain>>
+}
+
+package "Infraestructura" {
+  component (OrderJpaRepositoryAdapter) <<infra>>
+  component (InventoryJpaRepositoryAdapter) <<infra>>
+  component (ConcurrentOrderRepositoryWrapper) <<infra>>
+  component (ConcurrentInventoryRepositoryWrapper) <<infra>>
+  component (RedisConfig) <<infra>>
+  component (SecurityConfig) <<infra>>
+}
+
+OrderController --> CreateOrderService : coordina \nordenes
+OrderController --> PayOrderService
+OrderController --> SearchOrdersService
+InventoryController --> ListInventoryService
+InventoryController --> InventoryJpaRepositoryAdapter : consulta stock
+CacheController --> RedisConfig : limpia caché
+
+CreateOrderService --> OrderRepository
+CreateOrderService --> InventoryRepository
+PayOrderService --> OrderRepository
+SearchOrdersService --> OrderRepository
+ListInventoryService --> InventoryRepository
+
+OrderJpaRepositoryAdapter --> OrderRepository
+OrderJpaRepositoryAdapter --> ConcurrentOrderRepositoryWrapper
+InventoryJpaRepositoryAdapter --> InventoryRepository
+InventoryJpaRepositoryAdapter --> ConcurrentInventoryRepositoryWrapper
+
+ConcurrentOrderRepositoryWrapper --> SecurityConfig : locking/seguridad
+ConcurrentInventoryRepositoryWrapper --> RedisConfig : cache invalidation
+
+note right of OrderController
+  - Expone endpoints REST
+  - Cada acción delega casos de uso
+end note
+
+note top of ConcurrentOrderRepositoryWrapper
+  Retrys y locking optimista
+end note
+
+note bottom of RedisConfig
+  Configuración de caché distribuida
+end note
+
+@enduml
