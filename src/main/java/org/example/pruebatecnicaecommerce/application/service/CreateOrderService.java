@@ -33,13 +33,11 @@ public class CreateOrderService {
         Order order = Order.create(UuidUtils.fromString(customerPublicId));
 
         request.getItems().forEach(item -> {
-            // Resolve productCode to UUID
             Inventory inventory = inventoryRepository.findByProductCode(item.getProductCode())
                     .orElseThrow(() -> new IllegalArgumentException("Product not found: " + item.getProductCode()));
 
             UUID productId = inventory.getProductId();
 
-            // Use price from request if provided, otherwise use default price
             BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.valueOf(10.00);
 
             order.addItem(new OrderItem(
@@ -50,7 +48,6 @@ public class CreateOrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        // Publish OrderCreated event for notifications
         OrderCreatedEvent createdEvent = new OrderCreatedEvent(
                 savedOrder.getId(),
                 savedOrder.getPublicId(),
@@ -59,12 +56,11 @@ public class CreateOrderService {
                 savedOrder.getItems().size());
         eventPublisher.publish(createdEvent);
 
-        // Publish initial status change event for history tracking
         OrderStatusChangedEvent statusEvent = new OrderStatusChangedEvent(
                 savedOrder.getId(),
                 savedOrder.getPublicId(),
                 savedOrder.getCustomerId(),
-                null, // No previous status for initial creation
+                null,
                 savedOrder.getStatus(),
                 savedOrder.getTotal());
         eventPublisher.publish(statusEvent);
