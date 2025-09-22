@@ -61,14 +61,71 @@ La aplicación de ecommerce está organizada en capas: controladores REST, servi
 5. **Persistencia/Caché**: PostgreSQL almacena el estado; Redis sirve para lecturas recurrentes.
 6. **Eventos**: los eventos de dominio notifican cambios de estado a otros componentes.
 
-## Notas de despliegue
-
-- El servicio es stateless; la sesión viaja en el JWT.
-- `docker-compose.yml` Redis para desarrollo local.
-
 </details>
 
-#### Resumen técnico (documento completo)
+### Manejo de concurrencia
+
+La plataforma protege los agregados críticos mediante una combinación de bloqueo optimista y reintentos exponenciales:
+
+- `ConcurrencyConfig` habilita `@EnableRetry`, `@EnableAsync` y `@EnableTransactionManagement` para que las anotaciones de reintentos y transacciones funcionen en toda la aplicación.
+- Los wrappers `ConcurrentOrderRepositoryWrapper` y `ConcurrentInventoryRepositoryWrapper` delegan en los repositorios JPA, validan versiones (`@Version`) y aplican reintentos automáticos ante `OptimisticLockingFailureException` con backoff exponencial.
+- `DeadlockHandlingService` encapsula operaciones críticas con reintentos adicionales y ordenamiento de bloqueos para minimizar condiciones de interbloqueo y permite ejecutar lotes con commit escalonado.
+
+Los servicios de aplicación (`CreateOrderService`, `PayOrderService`, etc.) utilizan estos componentes para mantener la consistencia del stock y los pedidos aun bajo alta concurrencia.
+
+### Ciclo de vida de pedidos
+
+El agregado `Order` gobierna las transiciones válidas a través de la enumeración `OrderStatus`, que actúa como una máquina de estados finita:
+
+1. **CREATED** → puede pasar a **PAID** o **CANCELLED** según el pago o una cancelación explícita.
+2. **PAID** → transiciona a **SHIPPED** cuando se completa el envío o a **CANCELLED** si se revierte.
+3. **SHIPPED** → sólo permite el cambio a **DELIVERED** cuando se confirma la entrega.
+4. **DELIVERED**/**CANCELLED** → estados terminales sin transiciones adicionales.
+
+Las validaciones de `Order` y `OrderStatus` impiden movimientos no válidos y registran cada cambio a través de servicios de aplicación como `ShipOrderService` y `CancelOrderService` antes de persistir la versión más reciente del agregado.
+
+### Flujo de eventos y notificaciones
+
+Los eventos de dominio capturan hitos relevantes del ciclo de vida y disparan integraciones secundarias:
+
+- El agregado publica `OrderCreatedEvent` y `OrderStatusChangedEvent` mediante el puerto `EventPublisher`. La infraestructura implementa este puerto con `SpringEventPublisher`, delegando en el `ApplicationEventPublisher` de Spring.
+- `OrderEventListener` reacciona a estos eventos para persistir el historial (`OrderHistoryService`) y orquestar notificaciones a través de `NotificationService` (implementación mock para desarrollo/pruebas).
+
+Este flujo desacopla las integraciones asíncronas del procesamiento principal del pedido y permite añadir canales externos sin modificar el dominio.
+
+### Puesta en marcha rápida
+
+1. Pre-requisitos: JDK 17, Docker y Docker Compose.
+2. Iniciar servicios de soporte (Redis y RedisInsight):
+   ```bash
+   docker compose up -d
+   ```
+3. Ejecutar la aplicación con Maven:
+   ```bash
+   mvn spring-boot:run
+   ```
+4. Explorar la API: `http://localhost:8080/swagger-ui.html` (documentación OpenAPI).
+
+#### Endpoints base (API v1)
+
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/register`
+- `GET /api/v1/inventory`
+- `GET /api/v1/inventory/{productId}`
+- `POST /api/v1/inventory/{productId}/increase?quantity=5`
+- `POST /api/v1/inventory/{productId}/decrease?quantity=2`
+- `GET /api/v1/orders`
+- `POST /api/v1/orders`
+- `GET /api/v1/orders/{publicId}`
+- `GET /api/v1/orders/{publicId}/status`
+- `POST /api/v1/orders/{publicId}/pay`
+- `POST /api/v1/orders/{publicId}/ship`
+- `POST /api/v1/orders/{publicId}/cancel`
+- `GET /api/v1/orders/{publicId}/history`
+
+Para ejecutar los tests de regresión utiliza `mvn test`.
+
+### Resumen técnico (documento completo)
 
 <details>
 <summary>Ver contenido de docs/technical-overview.md</summary>
@@ -99,13 +156,13 @@ Este documento describe la arquitectura y los componentes principales del servic
 ## API
 
 - Controladores en `infrastructure.rest` con Swagger (`@Operation`, `@ApiResponses`).
-- Swagger UI público: `http://localhost:8080/swagger-ui/index.html` (permitido en `SecurityConfig`).
-- Colección Postman (`postman/Ecommerce_API.postman_collection.json`).
+- Swagger UI público: `http://localhost:8080/swagger-ui.html` (permitido en `SecurityConfig`).
+- Colección Postman (`postman/Ecommerce_API_Workflow.postman_collection.json`).
 
 ## Seguridad
 
 - Roles y permisos configurados en `SecurityConfig`.
-- Tokens emitidos vía `/auth/login` y `/auth/register`.
+- Tokens emitidos vía `/api/v1/auth/login` y `/api/v1/auth/register`.
 - Requiere `Authorization: Bearer <token>` en endpoints protegidos.
 
 ## Eventos
@@ -139,7 +196,7 @@ Se integró Swagger/OpenAPI para explorar y probar endpoints.
 
 **Pruebas**
 
-- Acceso verificado a `http://localhost:8080/swagger-ui/index.html`.
+- Acceso verificado a `http://localhost:8080/swagger-ui.html`.
 - Endpoints documentados visibles y ejecutables (con token Bearer cuando es necesario).
 
 ## Formato de Pull Request
@@ -226,7 +283,7 @@ Mantén un historial lineal utilizando `git pull --rebase` y rebaseando tu rama 
 
 ### Seguridad (JWT)
 
-- Endpoints públicos: `/auth/register`, `/auth/login`
+- Endpoints públicos: `/api/v1/auth/register`, `/api/v1/auth/login`
 - Endpoints protegidos requieren `Authorization: Bearer <token>`
 - Roles y permisos definidos en `SecurityConfig`
 
@@ -251,18 +308,16 @@ Herramientas de administración de cache: `CacheController` (`/admin/cache`) par
 ### API
 
 - Controladores en `infrastructure.rest` (`OrderController`, `AuthController`, etc.)
-- Nota sobre documentación OpenAPI/Swagger: existe soporte y anotaciones en controladores. Si se desea habilitar UI de Swagger, agregar la dependencia `springdoc-openapi-starter-webmvc-ui` y la config correspondiente. En este repo puede estar deshabilitado por compatibilidad o decisión de despliegue.
+- Nota sobre documentación OpenAPI/Swagger: existe soporte y anotaciones en controladores. UI disponible en `http://localhost:8080/swagger-ui.html`.
 
 #### Colección Postman
 
-- Colección: `postman/Ecommerce_API.postman_collection.json`
-- Descarga directa desde el repo: [Ecommerce_API.postman_collection.json](postman/Ecommerce_API.postman_collection.json)
+- Colección: `postman/Ecommerce_API_Workflow.postman_collection.json`
 - Cómo usar:
   1. Importa la colección en Postman.
-  2. Crea (o importa) un Environment con la variable `baseUrl` (por ejemplo: `http://localhost:8080`).
-  3. Ejecuta `Auth / Login` para obtener el token.
-  4. Define una variable `token` en el Environment con el JWT devuelto (solo el valor, sin `Bearer`).
-  5. La colección añade el header `Authorization: Bearer {{token}}` automáticamente en las requests protegidas.
+  2. Configura el Environment con `baseUrl = http://localhost:8080/api/v1`.
+  3. Ejecuta `1.1 Login administrador` o `1.3 Login usuario` para obtener el token.
+  4. La colección añade el header `Authorization: Bearer {{authToken}}` automáticamente en las requests protegidas.
 
 ### Cómo ejecutar
 
@@ -280,17 +335,16 @@ mvn clean test
 mvn spring-boot:run
 ```
 
-3. Credenciales de ejemplo (si aplica) y flujo:
+3. Flujo básico
 
-- Registra usuario: `POST /auth/register`
-- Login: `POST /auth/login` → token JWT
+- Registro/Login: `POST /api/v1/auth/register` y `POST /api/v1/auth/login`
 - Usa el token en `Authorization: Bearer <token>` para invocar endpoints protegidos
 
 ### Pruebas
 
 - Ejecutar todo: `mvn test`
 - Cobertura: generada con JaCoCo (ver `target/site/jacoco/index.html`)
-- Pruebas de concurrencia: `OrderConcurrencyTest` (pueden estar temporalmente deshabilitadas si requieren refactor tras cambios de servicios)
+- Pruebas de concurrencia: `OrderConcurrencyTest`
 
 ### Flujo de desarrollo (GitFlow + Conventional Commits)
 
@@ -307,7 +361,7 @@ Ver `docs/gitflow.md`.
 - Flyway: errores de versiones duplicadas → unificar migraciones conflictivas
 - Redis: valores stale → limpiar caché (`/admin/cache/clear`)
 - Historial de órdenes vacío/incompleto → validar publicación/escucha de `OrderStatusChangedEvent` y la tabla `order_status_history`
-- Swagger 500 / `NoSuchMethodError` → revisar compatibilidad de versión `springdoc-openapi` con versión de Spring Boot (habilitar solo si es necesario)
+- Swagger 500 / `NoSuchMethodError` → revisar compatibilidad de versión `springdoc-openapi`
 
 ### Recursos adicionales
 

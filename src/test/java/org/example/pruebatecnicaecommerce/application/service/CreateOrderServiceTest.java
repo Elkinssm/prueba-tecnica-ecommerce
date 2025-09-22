@@ -8,6 +8,7 @@ import org.example.pruebatecnicaecommerce.domain.model.inventory.InventoryReposi
 import org.example.pruebatecnicaecommerce.domain.model.order.Order;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderRepository;
 import org.example.pruebatecnicaecommerce.domain.service.EventPublisher;
+import org.example.pruebatecnicaecommerce.shared.error.InsufficientStockException;
 
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
@@ -46,6 +48,8 @@ class CreateOrderServiceTest {
 
     private CreateOrderRequest createOrderRequest;
     private Order savedOrder;
+    private Inventory inventory1;
+    private Inventory inventory2;
 
     @BeforeEach
     void setUp() {
@@ -61,10 +65,10 @@ class CreateOrderServiceTest {
                 UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"), 1, new BigDecimal("15.50")));
 
         // Mock inventory lookups
-        Inventory inventory1 = Inventory.restore(
+        inventory1 = Inventory.restore(
                 UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
                 "PROD-11111111", 100, 0);
-        Inventory inventory2 = Inventory.restore(
+        inventory2 = Inventory.restore(
                 UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"),
                 "PROD-22222222", 50, 0);
 
@@ -87,10 +91,13 @@ class CreateOrderServiceTest {
         assertThat(result.getStatus()).isEqualTo("CREATED");
         assertThat(result.getItems()).hasSize(2);
         assertThat(result.getTotal()).isEqualTo(new BigDecimal("75.48"));
+        assertThat(inventory1.getStock()).isEqualTo(98);
+        assertThat(inventory2.getStock()).isEqualTo(49);
 
         verify(orderRepository).save(
                 argThat(order -> order.getCustomerId().toString().equals("123e4567-e89b-12d3-a456-426614174000")));
         verify(eventPublisher, times(2)).publish(any()); // OrderCreated + OrderStatusChanged events
+        verify(inventoryRepository, times(2)).save(any(Inventory.class));
     }
 
     @Test
@@ -136,5 +143,24 @@ class CreateOrderServiceTest {
             assertThat(order.getItems().get(1).getQuantity()).isEqualTo(1);
             return true;
         }));
+        verify(inventoryRepository, times(2)).save(any(Inventory.class));
+    }
+
+    @Test
+    @DisplayName("Should rollback when stock is insufficient")
+    void shouldRollbackWhenStockIsInsufficient() {
+        // Arrange
+        Inventory insufficientInventory = Inventory.restore(
+                UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"),
+                "PROD-22222222", 0, 0);
+        when(inventoryRepository.findByProductCode("PROD-22222222")).thenReturn(Optional.of(insufficientInventory));
+
+        // Act & Assert
+        assertThatThrownBy(() -> createOrderService.execute(createOrderRequest, "123e4567-e89b-12d3-a456-426614174000"))
+                .isInstanceOf(InsufficientStockException.class);
+
+        verify(orderRepository, never()).save(any(Order.class));
+        verify(eventPublisher, never()).publish(any());
+        verify(inventoryRepository, times(1)).save(any(Inventory.class));
     }
 }
