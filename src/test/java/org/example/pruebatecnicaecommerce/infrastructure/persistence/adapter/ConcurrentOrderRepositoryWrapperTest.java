@@ -4,6 +4,7 @@ import org.example.pruebatecnicaecommerce.domain.model.order.Order;
 import org.example.pruebatecnicaecommerce.infrastructure.persistence.order.JpaOrderRepository;
 import org.example.pruebatecnicaecommerce.shared.error.OptimisticLockException;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,7 +20,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Concurrent Order Repository Wrapper Tests")
-@org.junit.jupiter.api.Disabled("Temporarily disabled - needs refactoring")
 class ConcurrentOrderRepositoryWrapperTest {
 
     @Mock
@@ -29,6 +29,7 @@ class ConcurrentOrderRepositoryWrapperTest {
     private ConcurrentOrderRepositoryWrapper concurrentWrapper;
 
     @Test
+    @Disabled("Requires integration test with persistence context")
     @DisplayName("Should handle optimistic lock exception and retry")
     void shouldHandleOptimisticLockExceptionAndRetry() {
         // Arrange
@@ -64,3 +65,4 @@ class ConcurrentOrderRepositoryWrapperTest {
         assertTrue(true, "Integration test placeholder - would test actual save operations");
     }
 }
+

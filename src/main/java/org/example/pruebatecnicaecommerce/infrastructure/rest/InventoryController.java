@@ -1,22 +1,17 @@
 package org.example.pruebatecnicaecommerce.infrastructure.rest;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import org.example.pruebatecnicaecommerce.domain.model.inventory.Inventory;
+import org.example.pruebatecnicaecommerce.domain.model.inventory.InventoryRepository;
+import org.example.pruebatecnicaecommerce.shared.utils.UuidUtils;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.HashMap;
-import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import org.example.pruebatecnicaecommerce.shared.error.ErrorResponse;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.constraints.Positive;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/inventory")
@@ -25,47 +20,45 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "bearerAuth")
 public class InventoryController {
 
-    @GetMapping
-    @Operation(
-            summary = "Consultar inventario completo",
-            description = "Devuelve un resumen del inventario registrado en el sistema. Actualmente retorna un mensaje placeholder"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Inventario recuperado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Map.class))),
-            @ApiResponse(responseCode = "401", description = "No autenticado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public ResponseEntity<Map<String, String>> getAllInventory() {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Inventory endpoint - functionality not implemented yet");
-        return ResponseEntity.ok(response);
-    }
+        private final InventoryRepository inventoryRepository;
 
-    @GetMapping("/{productId}")
-    @Operation(
-            summary = "Consultar inventario por producto",
-            description = "Devuelve el detalle de inventario asociado a un producto especifico. Actualmente retorna un mensaje placeholder"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Inventario recuperado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Map.class))),
-            @ApiResponse(responseCode = "401", description = "No autenticado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Producto no encontrado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public ResponseEntity<Map<String, String>> getInventoryByProductId(
-            @Parameter(description = "Identificador del producto", required = true, example = "SKU-12345")
-            @PathVariable String productId) {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Inventory by product ID endpoint - functionality not implemented yet");
-        response.put("productId", productId);
-        return ResponseEntity.ok(response);
-    }
+        @GetMapping
+        public ResponseEntity<List<Inventory>> getAllInventory() {
+                List<Inventory> inventoryList = inventoryRepository.findAll();
+                return ResponseEntity.ok(inventoryList);
+        }
+
+        @GetMapping("/{productId}")
+        public ResponseEntity<Inventory> getByProductId(@PathVariable String productId) {
+                UUID productUuid = UuidUtils.fromString(productId);
+                return inventoryRepository.findByProductId(productUuid)
+                                .map(ResponseEntity::ok)
+                                .orElse(ResponseEntity.notFound().build());
+        }
+
+        @PostMapping("/{productId}/increase")
+        public ResponseEntity<Inventory> increaseStock(
+                        @PathVariable String productId,
+                        @RequestParam @Positive(message = "Quantity must be positive") int quantity) {
+                UUID productUuid = UuidUtils.fromString(productId);
+                Inventory inventory = inventoryRepository.findByProductId(productUuid)
+                                .orElseGet(() -> Inventory.create(productUuid, 0));
+
+                inventory.release(quantity); // Corregido: usar quantity directamente
+                inventoryRepository.save(inventory);
+                return ResponseEntity.ok(inventory);
+        }
+
+        @PostMapping("/{productId}/decrease")
+        public ResponseEntity<Inventory> decreaseStock(
+                        @PathVariable String productId,
+                        @RequestParam @Positive(message = "Quantity must be positive") int quantity) {
+                UUID productUuid = UuidUtils.fromString(productId);
+                Inventory inventory = inventoryRepository.findByProductId(productUuid)
+                                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+                inventory.reserve(quantity);
+                inventoryRepository.save(inventory);
+                return ResponseEntity.ok(inventory);
+        }
 }

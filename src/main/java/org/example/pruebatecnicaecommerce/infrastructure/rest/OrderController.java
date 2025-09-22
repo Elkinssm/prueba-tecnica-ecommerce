@@ -14,26 +14,30 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.pruebatecnicaecommerce.application.dto.CreateOrderRequest;
+import org.example.pruebatecnicaecommerce.application.dto.OrderFilterCriteria;
 import org.example.pruebatecnicaecommerce.application.dto.OrderResponse;
 import org.example.pruebatecnicaecommerce.application.dto.OrderStatusHistoryResponse;
 import org.example.pruebatecnicaecommerce.application.service.CancelOrderService;
 import org.example.pruebatecnicaecommerce.application.service.CreateOrderService;
-import org.example.pruebatecnicaecommerce.application.service.GetOrderHistoryService;
 import org.example.pruebatecnicaecommerce.application.service.GetOrderService;
 import org.example.pruebatecnicaecommerce.application.service.GetOrderStatusService;
+import org.example.pruebatecnicaecommerce.application.service.GetOrderHistoryService;
 import org.example.pruebatecnicaecommerce.application.service.ListOrdersService;
 import org.example.pruebatecnicaecommerce.application.service.PayOrderService;
+import org.example.pruebatecnicaecommerce.application.service.SearchOrdersService;
 import org.example.pruebatecnicaecommerce.application.service.ShipOrderService;
+import org.example.pruebatecnicaecommerce.domain.model.user.User;
+import org.example.pruebatecnicaecommerce.domain.model.user.UserRepository;
 import org.example.pruebatecnicaecommerce.shared.error.ErrorResponse;
+import org.example.pruebatecnicaecommerce.shared.error.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/orders")
@@ -44,111 +48,49 @@ public class OrderController {
 
     private final CreateOrderService createOrderService;
     private final PayOrderService payOrderService;
-    private final ShipOrderService shipOrderService;
     private final CancelOrderService cancelOrderService;
+    private final ShipOrderService shipOrderService;
     private final GetOrderService getOrderService;
     private final ListOrdersService listOrdersService;
     private final GetOrderStatusService getOrderStatusService;
     private final GetOrderHistoryService getOrderHistoryService;
+    private final SearchOrdersService searchOrdersService;
+    private final UserRepository userRepository;
 
     @PostMapping
-    @Operation(
-            summary = "Crear una nueva orden",
-            description = "Crea una orden asociada al cliente indicado, reserva inventario y devuelve el detalle completo"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Orden creada exitosamente",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = OrderResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Solicitud invalida",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Inventario o cliente no encontrado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Conflicto de concurrencia o estado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public ResponseEntity<OrderResponse> createOrder(
-            @Valid @RequestBody CreateOrderRequest request,
-            @Parameter(name = "X-Customer-Id", description = "Identificador publico del cliente", in = ParameterIn.HEADER,
-                    required = true, example = "8d66128e-760c-4c46-9f37-615f58b4b4f4")
-            @RequestHeader("X-Customer-Id") String customerId) {
-        OrderResponse response = createOrderService.execute(request, customerId);
+    public ResponseEntity<OrderResponse> create(@Valid @RequestBody CreateOrderRequest request,
+            Authentication authentication) {
+        // Get customer UUID automatically from authenticated user
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
+
+        OrderResponse response = createOrderService.execute(request, user.getId().toString());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/{publicOrderId}/pay")
-    @Operation(
-            summary = "Marcar orden como pagada",
-            description = "Actualiza el estado de la orden a PAID una vez confirmado el pago"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Orden pagada",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = OrderResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Orden no encontrada",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Transicion de estado no valida",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public ResponseEntity<OrderResponse> payOrder(
-            @Parameter(description = "Identificador publico de la orden", required = true,
-                    example = "ORD-20250921-OEUI")
-            @PathVariable String publicOrderId) {
+    public ResponseEntity<OrderResponse> pay(@PathVariable String publicOrderId) {
         OrderResponse response = payOrderService.execute(publicOrderId);
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{publicOrderId}/cancel")
+    public ResponseEntity<OrderResponse> cancel(@PathVariable String publicOrderId) {
+        OrderResponse response = cancelOrderService.execute(publicOrderId);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/{publicOrderId}/ship")
-    @Operation(
-            summary = "Despachar orden",
-            description = "Marca la orden como enviada una vez que se entrega al operador logistico"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Orden despachada",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = OrderResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Orden no encontrada",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Transicion de estado no valida",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public ResponseEntity<OrderResponse> shipOrder(
-            @Parameter(description = "Identificador publico de la orden", required = true,
-                    example = "ORD-20250921-OEUI")
-            @PathVariable String publicOrderId) {
+    public ResponseEntity<OrderResponse> ship(@PathVariable String publicOrderId) {
         OrderResponse response = shipOrderService.execute(publicOrderId);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{publicOrderId}/cancel")
-    @Operation(
-            summary = "Cancelar orden",
-            description = "Cancela la orden y libera cualquier inventario reservado"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Orden cancelada",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = OrderResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Orden no encontrada",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Transicion de estado no valida",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public ResponseEntity<OrderResponse> cancelOrder(
-            @Parameter(description = "Identificador publico de la orden", required = true,
-                    example = "ORD-20250921-OEUI")
-            @PathVariable String publicOrderId) {
-        OrderResponse response = cancelOrderService.execute(publicOrderId);
-        return ResponseEntity.ok(response);
+    @GetMapping
+    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+        List<OrderResponse> orders = listOrdersService.execute();
+        return ResponseEntity.ok(orders);
     }
 
     @GetMapping("/{publicOrderId}")
@@ -169,21 +111,6 @@ public class OrderController {
                     example = "ORD-20250921-OEUI")
             @PathVariable String publicOrderId) {
         OrderResponse response = getOrderService.execute(publicOrderId);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping
-    @Operation(
-            summary = "Listar ordenes",
-            description = "Obtiene todas las ordenes disponibles para el usuario autenticado"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Listado de ordenes",
-                    content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = OrderResponse.class))))
-    })
-    public ResponseEntity<List<OrderResponse>> listOrders() {
-        List<OrderResponse> response = listOrdersService.execute();
         return ResponseEntity.ok(response);
     }
 
@@ -227,5 +154,49 @@ public class OrderController {
             @PathVariable String publicOrderId) {
         List<OrderStatusHistoryResponse> history = getOrderHistoryService.execute(publicOrderId);
         return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<OrderResponse>> searchOrders(
+            @RequestParam(required = false) String customerId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(required = false) String search) {
+
+        OrderFilterCriteria criteria = OrderFilterCriteria.builder()
+                .customerId(customerId)
+                .status(status)
+                .dateFrom(dateFrom != null ? LocalDateTime.parse(dateFrom) : null)
+                .dateTo(dateTo != null ? LocalDateTime.parse(dateTo) : null)
+                .search(search)
+                .build();
+
+        List<OrderResponse> orders = searchOrdersService.execute(criteria);
+        return ResponseEntity.ok(orders);
+    }
+
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<List<OrderResponse>> getOrdersByCustomer(
+            @PathVariable String customerId,
+            @RequestParam(required = false) String status) {
+
+        OrderFilterCriteria criteria = OrderFilterCriteria.builder()
+                .customerId(customerId)
+                .status(status)
+                .build();
+
+        List<OrderResponse> orders = searchOrdersService.execute(criteria);
+        return ResponseEntity.ok(orders);
+    }
+
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<OrderResponse>> getOrdersByStatus(@PathVariable String status) {
+        OrderFilterCriteria criteria = OrderFilterCriteria.builder()
+                .status(status)
+                .build();
+
+        List<OrderResponse> orders = searchOrdersService.execute(criteria);
+        return ResponseEntity.ok(orders);
     }
 }
