@@ -3,9 +3,13 @@ package org.example.pruebatecnicaecommerce.application.service;
 import org.example.pruebatecnicaecommerce.application.dto.CreateOrderRequest;
 import org.example.pruebatecnicaecommerce.application.dto.ItemRequest;
 import org.example.pruebatecnicaecommerce.application.dto.OrderResponse;
+import org.example.pruebatecnicaecommerce.domain.model.inventory.Inventory;
+import org.example.pruebatecnicaecommerce.domain.model.inventory.InventoryRepository;
 import org.example.pruebatecnicaecommerce.domain.model.order.Order;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderRepository;
 import org.example.pruebatecnicaecommerce.domain.service.EventPublisher;
+
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CreateOrderService Unit Tests")
@@ -29,6 +34,9 @@ class CreateOrderServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
+
+    @Mock
+    private InventoryRepository inventoryRepository;
 
     @Mock
     private EventPublisher eventPublisher;
@@ -41,8 +49,8 @@ class CreateOrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        ItemRequest item1 = new ItemRequest("550e8400-e29b-41d4-a716-446655440000", 2, new BigDecimal("29.99"));
-        ItemRequest item2 = new ItemRequest("6ba7b810-9dad-11d1-80b4-00c04fd430c8", 1, new BigDecimal("15.50"));
+        ItemRequest item1 = new ItemRequest("PROD-11111111", 2, new BigDecimal("29.99"));
+        ItemRequest item2 = new ItemRequest("PROD-22222222", 1, new BigDecimal("15.50"));
 
         createOrderRequest = new CreateOrderRequest(List.of(item1, item2));
 
@@ -51,6 +59,17 @@ class CreateOrderServiceTest {
                 UUID.fromString("550e8400-e29b-41d4-a716-446655440000"), 2, new BigDecimal("29.99")));
         savedOrder.addItem(new org.example.pruebatecnicaecommerce.domain.model.order.OrderItem(
                 UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"), 1, new BigDecimal("15.50")));
+
+        // Mock inventory lookups
+        Inventory inventory1 = Inventory.restore(
+                UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
+                "PROD-11111111", 100, 0);
+        Inventory inventory2 = Inventory.restore(
+                UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"),
+                "PROD-22222222", 50, 0);
+
+        when(inventoryRepository.findByProductCode("PROD-11111111")).thenReturn(Optional.of(inventory1));
+        when(inventoryRepository.findByProductCode("PROD-22222222")).thenReturn(Optional.of(inventory2));
     }
 
     @Test
@@ -71,7 +90,7 @@ class CreateOrderServiceTest {
 
         verify(orderRepository).save(
                 argThat(order -> order.getCustomerId().toString().equals("123e4567-e89b-12d3-a456-426614174000")));
-        verify(eventPublisher).publish(any());
+        verify(eventPublisher, times(2)).publish(any()); // OrderCreated + OrderStatusChanged events
     }
 
     @Test
@@ -84,7 +103,7 @@ class CreateOrderServiceTest {
         createOrderService.execute(createOrderRequest, "123e4567-e89b-12d3-a456-426614174000");
 
         // Assert
-        verify(eventPublisher).publish(argThat(event -> event.getEventType().equals("OrderCreated")));
+        verify(eventPublisher, atLeastOnce()).publish(argThat(event -> event.getEventType().equals("OrderCreated")));
     }
 
     @Test
