@@ -14,8 +14,12 @@ import org.example.pruebatecnicaecommerce.application.service.ListOrdersService;
 import org.example.pruebatecnicaecommerce.application.service.PayOrderService;
 import org.example.pruebatecnicaecommerce.application.service.SearchOrdersService;
 import org.example.pruebatecnicaecommerce.application.service.ShipOrderService;
+import org.example.pruebatecnicaecommerce.domain.model.user.User;
+import org.example.pruebatecnicaecommerce.domain.model.user.UserRepository;
+import org.example.pruebatecnicaecommerce.shared.error.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -36,10 +40,17 @@ public class OrderController {
     private final GetOrderStatusService getOrderStatusService;
     private final GetOrderHistoryService getOrderHistoryService;
     private final SearchOrdersService searchOrdersService;
+    private final UserRepository userRepository;
 
     @PostMapping
-    public ResponseEntity<OrderResponse> create(@Valid @RequestBody CreateOrderRequest request) {
-        OrderResponse response = createOrderService.execute(request);
+    public ResponseEntity<OrderResponse> create(@Valid @RequestBody CreateOrderRequest request,
+            Authentication authentication) {
+        // Get customer UUID automatically from authenticated user
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
+
+        OrderResponse response = createOrderService.execute(request, user.getId().toString());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

@@ -17,6 +17,16 @@ public class OrderMapper {
         entity.setCustomerId(order.getCustomerId());
         entity.setStatus(order.getStatus());
         entity.setCreatedAt(order.getCreatedAt());
+
+        // Set version properly:
+        // - If version is 0, it's a new entity (let JPA handle it)
+        // - If version > 0, it's an existing entity being updated
+        if (order.getVersion() > 0) {
+            entity.setVersion(order.getVersion());
+        } else {
+            entity.setVersion(null); // JPA will auto-generate for new entities
+        }
+
         entity.setItems(order.getItems().stream()
                 .map(item -> toItemEntity(item, entity))
                 .collect(Collectors.toList()));
@@ -28,6 +38,12 @@ public class OrderMapper {
         entity.setPublicId(order.getPublicId());
         entity.setStatus(order.getStatus());
         entity.setCreatedAt(order.getCreatedAt());
+
+        // Only update version if the domain order has a newer version
+        // This prevents version conflicts during optimistic locking
+        if (order.getVersion() > 0 && order.getVersion() >= entity.getVersion()) {
+            entity.setVersion(order.getVersion());
+        }
 
         entity.getItems().clear();
         entity.getItems().addAll(order.getItems().stream()

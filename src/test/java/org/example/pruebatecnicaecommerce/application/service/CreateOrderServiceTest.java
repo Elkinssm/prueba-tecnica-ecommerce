@@ -44,7 +44,7 @@ class CreateOrderServiceTest {
         ItemRequest item1 = new ItemRequest("550e8400-e29b-41d4-a716-446655440000", 2, new BigDecimal("29.99"));
         ItemRequest item2 = new ItemRequest("6ba7b810-9dad-11d1-80b4-00c04fd430c8", 1, new BigDecimal("15.50"));
 
-        createOrderRequest = new CreateOrderRequest("123e4567-e89b-12d3-a456-426614174000", List.of(item1, item2));
+        createOrderRequest = new CreateOrderRequest(List.of(item1, item2));
 
         savedOrder = Order.create(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
         savedOrder.addItem(new org.example.pruebatecnicaecommerce.domain.model.order.OrderItem(
@@ -60,7 +60,7 @@ class CreateOrderServiceTest {
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
         // Act
-        OrderResponse result = createOrderService.execute(createOrderRequest);
+        OrderResponse result = createOrderService.execute(createOrderRequest, "123e4567-e89b-12d3-a456-426614174000");
 
         // Assert
         assertThat(result).isNotNull();
@@ -81,7 +81,7 @@ class CreateOrderServiceTest {
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
         // Act
-        createOrderService.execute(createOrderRequest);
+        createOrderService.execute(createOrderRequest, "123e4567-e89b-12d3-a456-426614174000");
 
         // Assert
         verify(eventPublisher).publish(argThat(event -> event.getEventType().equals("OrderCreated")));
@@ -94,7 +94,7 @@ class CreateOrderServiceTest {
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
         // Act
-        OrderResponse result = createOrderService.execute(createOrderRequest);
+        OrderResponse result = createOrderService.execute(createOrderRequest, "123e4567-e89b-12d3-a456-426614174000");
 
         // Assert
         // 2 * 29.99 + 1 * 15.50 = 75.48
@@ -108,7 +108,7 @@ class CreateOrderServiceTest {
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
         // Act
-        createOrderService.execute(createOrderRequest);
+        createOrderService.execute(createOrderRequest, "123e4567-e89b-12d3-a456-426614174000");
 
         // Assert
         verify(orderRepository).save(argThat(order -> {

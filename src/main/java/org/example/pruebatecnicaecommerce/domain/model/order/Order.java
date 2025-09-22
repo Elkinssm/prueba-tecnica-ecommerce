@@ -1,9 +1,11 @@
 package org.example.pruebatecnicaecommerce.domain.model.order;
 
 import lombok.Getter;
+import org.example.pruebatecnicaecommerce.domain.model.event.OrderStatusChangedEvent;
 import org.example.pruebatecnicaecommerce.shared.error.InvalidOrderStateTransitionException;
 import org.example.pruebatecnicaecommerce.shared.utils.PublicIdGenerator;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -11,7 +13,9 @@ import java.util.List;
 import java.util.UUID;
 
 @Getter
-public class Order {
+public class Order implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final UUID id;
     private final String publicId;
     private final UUID customerId;

@@ -5,8 +5,10 @@ import org.example.pruebatecnicaecommerce.domain.model.order.Order;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderStatus;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderRepository;
 import org.example.pruebatecnicaecommerce.infrastructure.persistence.mapper.OrderMapper;
-import org.example.pruebatecnicaecommerce.infrastructure.persistence.order.OrderEntity;
 import org.example.pruebatecnicaecommerce.infrastructure.persistence.order.JpaOrderRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -20,31 +22,31 @@ import java.util.stream.Collectors;
 public class OrderJpaRepositoryAdapter implements OrderRepository {
 
     private final JpaOrderRepository jpaRepository;
+    private final ConcurrentOrderRepositoryWrapper concurrentWrapper;
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "orders", key = "#order.id"),
+            @CacheEvict(value = "orders", key = "#order.publicId"),
+            @CacheEvict(value = "order-status", key = "#order.id"),
+            @CacheEvict(value = "order-status", key = "#order.publicId"),
+            @CacheEvict(value = "orders", allEntries = true) // Limpiar todo el caché de orders para asegurar
+                                                             // consistencia
+    })
     public Order save(Order order) {
-        OrderEntity entity;
-
-        if (order.getId() != null) {
-            entity = jpaRepository.findById(order.getId())
-                    .orElseGet(() -> OrderMapper.toEntity(order));
-
-            OrderMapper.updateEntity(entity, order);
-        } else {
-            entity = OrderMapper.toEntity(order);
-        }
-
-        OrderEntity saved = jpaRepository.save(entity);
-        return OrderMapper.toDomain(saved);
+        // Use concurrent wrapper for save operations with optimistic locking
+        return concurrentWrapper.saveWithOptimisticLocking(order);
     }
 
     @Override
+    @Cacheable(value = "orders", key = "#id")
     public Optional<Order> findById(UUID id) {
         return jpaRepository.findById(id)
                 .map(OrderMapper::toDomain);
     }
 
     @Override
+    @Cacheable(value = "orders", key = "#publicId")
     public Optional<Order> findByPublicId(String publicId) {
         return jpaRepository.findByPublicId(publicId)
                 .map(OrderMapper::toDomain);
