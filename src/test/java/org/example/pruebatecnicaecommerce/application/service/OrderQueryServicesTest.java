@@ -52,31 +52,28 @@ class OrderQueryServicesTest {
     @BeforeEach
     void setUp() {
         order1 = Order.restore(
-            UUID.randomUUID(),
-            PUBLIC_ORDER_ID,
-            CUSTOMER_ID,
-            OrderStatus.CREATED,
-            Instant.now().minusSeconds(3600),
-            0
-        );
-        
+                UUID.randomUUID(),
+                PUBLIC_ORDER_ID,
+                CUSTOMER_ID,
+                OrderStatus.CREATED,
+                Instant.now().minusSeconds(3600),
+                0);
+
         order2 = Order.restore(
-            UUID.randomUUID(),
-            "ORD-67890",
-            CUSTOMER_ID,
-            OrderStatus.PAID,
-            Instant.now().minusSeconds(1800),
-            0
-        );
-        
+                UUID.randomUUID(),
+                "ORD-67890",
+                CUSTOMER_ID,
+                OrderStatus.PAID,
+                Instant.now().minusSeconds(1800),
+                0);
+
         order3 = Order.restore(
-            UUID.randomUUID(),
-            "ORD-11111",
-            UUID.randomUUID(),
-            OrderStatus.SHIPPED,
-            Instant.now().minusSeconds(900),
-            0
-        );
+                UUID.randomUUID(),
+                "ORD-11111",
+                UUID.randomUUID(),
+                OrderStatus.SHIPPED,
+                Instant.now().minusSeconds(900),
+                0);
     }
 
     // GetOrderService Tests
@@ -95,7 +92,7 @@ class OrderQueryServicesTest {
         assertThat(result.getId()).isEqualTo(PUBLIC_ORDER_ID);
         assertThat(result.getCustomerId()).isEqualTo(CUSTOMER_ID.toString());
         assertThat(result.getStatus()).isEqualTo("CREATED");
-        
+
         verify(orderRepository).findByPublicId(PUBLIC_ORDER_ID);
     }
 
@@ -111,7 +108,7 @@ class OrderQueryServicesTest {
         assertThatThrownBy(() -> getOrderService.execute(nonExistentOrderId))
                 .isInstanceOf(OrderNotFoundException.class)
                 .hasMessage("Order not found with public ID: " + nonExistentOrderId);
-        
+
         verify(orderRepository).findByPublicId(nonExistentOrderId);
     }
 
@@ -132,7 +129,7 @@ class OrderQueryServicesTest {
                 .containsExactly(PUBLIC_ORDER_ID, "ORD-67890", "ORD-11111");
         assertThat(result).extracting(OrderResponse::getStatus)
                 .containsExactly("CREATED", "PAID", "SHIPPED");
-        
+
         verify(orderRepository).findAll();
     }
 
@@ -148,7 +145,7 @@ class OrderQueryServicesTest {
 
         // Assert
         assertThat(result).isEmpty();
-        
+
         verify(orderRepository).findAll();
     }
 
@@ -165,7 +162,7 @@ class OrderQueryServicesTest {
 
         // Assert
         assertThat(result).isEqualTo("CREATED");
-        
+
         verify(orderRepository).findByPublicId(PUBLIC_ORDER_ID);
     }
 
@@ -181,7 +178,7 @@ class OrderQueryServicesTest {
         assertThatThrownBy(() -> getOrderStatusService.execute(nonExistentOrderId))
                 .isInstanceOf(OrderNotFoundException.class)
                 .hasMessage("Order not found with public ID: " + nonExistentOrderId);
-        
+
         verify(orderRepository).findByPublicId(nonExistentOrderId);
     }
 
@@ -201,7 +198,7 @@ class OrderQueryServicesTest {
 
         String shippedStatus = getOrderStatusService.execute("ORD-SHIPPED");
         assertThat(shippedStatus).isEqualTo("SHIPPED");
-        
+
         verify(orderRepository).findByPublicId("ORD-PAID");
         verify(orderRepository).findByPublicId("ORD-SHIPPED");
     }
@@ -222,7 +219,7 @@ class OrderQueryServicesTest {
         assertThat(result.get(0).getStatus()).isEqualTo("CREATED");
         assertThat(result.get(0).getPreviousStatus()).isNull();
         assertThat(result.get(0).getChangedAt()).isNotNull();
-        
+
         verify(orderRepository).findByPublicId(PUBLIC_ORDER_ID);
     }
 
@@ -238,16 +235,16 @@ class OrderQueryServicesTest {
 
         // Assert
         assertThat(result).hasSize(2);
-        
+
         // First entry should be CREATED
         assertThat(result.get(0).getStatus()).isEqualTo("CREATED");
         assertThat(result.get(0).getPreviousStatus()).isNull();
-        
+
         // Second entry should be current status
         assertThat(result.get(1).getStatus()).isEqualTo("PAID");
         assertThat(result.get(1).getPreviousStatus()).isEqualTo("CREATED");
         assertThat(result.get(1).getChangedAt()).isNotNull();
-        
+
         verify(orderRepository).findByPublicId("ORD-PAID");
     }
 
@@ -263,7 +260,7 @@ class OrderQueryServicesTest {
         assertThatThrownBy(() -> getOrderHistoryService.execute(nonExistentOrderId))
                 .isInstanceOf(OrderNotFoundException.class)
                 .hasMessage("Order not found with public ID: " + nonExistentOrderId);
-        
+
         verify(orderRepository).findByPublicId(nonExistentOrderId);
     }
 
@@ -279,15 +276,15 @@ class OrderQueryServicesTest {
 
         // Assert
         assertThat(result).hasSize(2);
-        
+
         // First entry should be CREATED
         assertThat(result.get(0).getStatus()).isEqualTo("CREATED");
         assertThat(result.get(0).getPreviousStatus()).isNull();
-        
+
         // Second entry should be SHIPPED
         assertThat(result.get(1).getStatus()).isEqualTo("SHIPPED");
         assertThat(result.get(1).getPreviousStatus()).isEqualTo("CREATED");
-        
+
         verify(orderRepository).findByPublicId("ORD-SHIPPED");
     }
 }

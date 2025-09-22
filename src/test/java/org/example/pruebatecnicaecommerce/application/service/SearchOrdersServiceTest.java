@@ -41,33 +41,30 @@ class SearchOrdersServiceTest {
     @BeforeEach
     void setUp() {
         customerId = UUID.randomUUID();
-        
+
         order1 = Order.restore(
-            UUID.randomUUID(),
-            "ORD-001",
-            customerId,
-            OrderStatus.CREATED,
-            Instant.now().minusSeconds(3600),
-            0
-        );
-        
+                UUID.randomUUID(),
+                "ORD-001",
+                customerId,
+                OrderStatus.CREATED,
+                Instant.now().minusSeconds(3600),
+                0);
+
         order2 = Order.restore(
-            UUID.randomUUID(),
-            "ORD-002",
-            customerId,
-            OrderStatus.PAID,
-            Instant.now().minusSeconds(1800),
-            0
-        );
-        
+                UUID.randomUUID(),
+                "ORD-002",
+                customerId,
+                OrderStatus.PAID,
+                Instant.now().minusSeconds(1800),
+                0);
+
         order3 = Order.restore(
-            UUID.randomUUID(),
-            "ORD-003",
-            UUID.randomUUID(), // Different customer
-            OrderStatus.SHIPPED,
-            Instant.now().minusSeconds(900),
-            0
-        );
+                UUID.randomUUID(),
+                "ORD-003",
+                UUID.randomUUID(), // Different customer
+                OrderStatus.SHIPPED,
+                Instant.now().minusSeconds(900),
+                0);
     }
 
     @Test
@@ -90,7 +87,7 @@ class SearchOrdersServiceTest {
         assertThat(result.get(0).getId()).isEqualTo("ORD-001");
         assertThat(result.get(0).getCustomerId()).isEqualTo(customerId.toString());
         assertThat(result.get(0).getStatus()).isEqualTo("CREATED");
-        
+
         verify(orderRepository).findByCustomerIdAndStatus(customerId, OrderStatus.CREATED);
         verify(orderRepository, never()).findByCustomerId(any());
         verify(orderRepository, never()).findByStatus(any());
@@ -116,7 +113,7 @@ class SearchOrdersServiceTest {
         assertThat(result).hasSize(2);
         assertThat(result).extracting(OrderResponse::getId)
                 .containsExactly("ORD-001", "ORD-002");
-        
+
         verify(orderRepository).findByCustomerId(customerId);
         verify(orderRepository, never()).findByCustomerIdAndStatus(any(), any());
         verify(orderRepository, never()).findByStatus(any());
@@ -142,7 +139,7 @@ class SearchOrdersServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo("ORD-003");
         assertThat(result.get(0).getStatus()).isEqualTo("SHIPPED");
-        
+
         verify(orderRepository).findByStatus(OrderStatus.SHIPPED);
         verify(orderRepository, never()).findByCustomerId(any());
         verify(orderRepository, never()).findByCustomerIdAndStatus(any(), any());
@@ -156,7 +153,7 @@ class SearchOrdersServiceTest {
         // Arrange
         LocalDateTime dateFrom = LocalDateTime.now().minusHours(2);
         LocalDateTime dateTo = LocalDateTime.now();
-        
+
         OrderFilterCriteria criteria = OrderFilterCriteria.builder()
                 .dateFrom(dateFrom)
                 .dateTo(dateTo)
@@ -172,7 +169,7 @@ class SearchOrdersServiceTest {
         assertThat(result).hasSize(2);
         assertThat(result).extracting(OrderResponse::getId)
                 .containsExactly("ORD-002", "ORD-003");
-        
+
         verify(orderRepository).findByCreatedAtBetween(any(Instant.class), any(Instant.class));
         verify(orderRepository, never()).findByCustomerId(any());
         verify(orderRepository, never()).findByCustomerIdAndStatus(any(), any());
@@ -196,7 +193,7 @@ class SearchOrdersServiceTest {
         assertThat(result).hasSize(3);
         assertThat(result).extracting(OrderResponse::getId)
                 .containsExactly("ORD-001", "ORD-002", "ORD-003");
-        
+
         verify(orderRepository).findAll();
         verify(orderRepository, never()).findByCustomerId(any());
         verify(orderRepository, never()).findByCustomerIdAndStatus(any(), any());
@@ -221,7 +218,7 @@ class SearchOrdersServiceTest {
         // Assert
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo("ORD-002");
-        
+
         verify(orderRepository).findAll();
     }
 
@@ -243,7 +240,7 @@ class SearchOrdersServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo("ORD-003");
         assertThat(result.get(0).getStatus()).isEqualTo("SHIPPED");
-        
+
         verify(orderRepository).findAll();
     }
 
@@ -263,7 +260,7 @@ class SearchOrdersServiceTest {
 
         // Assert
         assertThat(result).isEmpty();
-        
+
         verify(orderRepository).findAll();
     }
 
@@ -285,7 +282,7 @@ class SearchOrdersServiceTest {
         // Assert
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo("ORD-002");
-        
+
         verify(orderRepository).findByCustomerId(customerId);
     }
 
@@ -305,7 +302,7 @@ class SearchOrdersServiceTest {
 
         // Assert
         assertThat(result).hasSize(3);
-        
+
         verify(orderRepository).findAll();
     }
 
@@ -325,7 +322,7 @@ class SearchOrdersServiceTest {
 
         // Assert
         assertThat(result).hasSize(3);
-        
+
         verify(orderRepository).findAll();
     }
 
@@ -345,7 +342,7 @@ class SearchOrdersServiceTest {
 
         // Assert
         assertThat(result).isEmpty();
-        
+
         verify(orderRepository).findByCustomerId(any(UUID.class));
     }
 
@@ -367,7 +364,7 @@ class SearchOrdersServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo("ORD-001");
         assertThat(result.get(0).getStatus()).isEqualTo("CREATED");
-        
+
         verify(orderRepository).findAll();
     }
 }

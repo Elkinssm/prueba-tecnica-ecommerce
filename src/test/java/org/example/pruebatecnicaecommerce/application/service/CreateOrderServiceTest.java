@@ -43,9 +43,9 @@ class CreateOrderServiceTest {
     void setUp() {
         ItemRequest item1 = new ItemRequest("550e8400-e29b-41d4-a716-446655440000", 2, new BigDecimal("29.99"));
         ItemRequest item2 = new ItemRequest("6ba7b810-9dad-11d1-80b4-00c04fd430c8", 1, new BigDecimal("15.50"));
-        
+
         createOrderRequest = new CreateOrderRequest("123e4567-e89b-12d3-a456-426614174000", List.of(item1, item2));
-        
+
         savedOrder = Order.create(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
         savedOrder.addItem(new org.example.pruebatecnicaecommerce.domain.model.order.OrderItem(
                 UUID.fromString("550e8400-e29b-41d4-a716-446655440000"), 2, new BigDecimal("29.99")));
@@ -69,8 +69,8 @@ class CreateOrderServiceTest {
         assertThat(result.getItems()).hasSize(2);
         assertThat(result.getTotal()).isEqualTo(new BigDecimal("75.48"));
 
-        verify(orderRepository).save(argThat(order -> 
-            order.getCustomerId().toString().equals("123e4567-e89b-12d3-a456-426614174000")));
+        verify(orderRepository).save(
+                argThat(order -> order.getCustomerId().toString().equals("123e4567-e89b-12d3-a456-426614174000")));
         verify(eventPublisher).publish(any());
     }
 
@@ -84,8 +84,7 @@ class CreateOrderServiceTest {
         createOrderService.execute(createOrderRequest);
 
         // Assert
-        verify(eventPublisher).publish(argThat(event -> 
-            event.getEventType().equals("OrderCreated")));
+        verify(eventPublisher).publish(argThat(event -> event.getEventType().equals("OrderCreated")));
     }
 
     @Test

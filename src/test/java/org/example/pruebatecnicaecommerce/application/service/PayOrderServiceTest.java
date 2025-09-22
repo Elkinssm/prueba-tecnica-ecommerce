@@ -52,7 +52,7 @@ class PayOrderServiceTest {
     void setUp() {
         order = Order.create(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
         order.addItem(new OrderItem(PRODUCT_ID, 2, new BigDecimal("29.99")));
-        
+
         inventory = Inventory.create(PRODUCT_ID, 100);
     }
 
@@ -70,7 +70,7 @@ class PayOrderServiceTest {
         // Assert
         assertThat(result).isNotNull();
         assertThat(result.getStatus()).isEqualTo("PAID");
-        
+
         verify(inventoryRepository).save(argThat(inv -> inv.getStock() == 98)); // 100 - 2 = 98
         verify(eventPublisher).publish(any());
     }
@@ -84,7 +84,7 @@ class PayOrderServiceTest {
         // Act & Assert
         assertThatThrownBy(() -> payOrderService.execute(PUBLIC_ORDER_ID))
                 .isInstanceOf(OrderNotFoundException.class);
-        
+
         verify(inventoryRepository, never()).findByProductId(any());
         verify(eventPublisher, never()).publish(any());
     }
@@ -99,7 +99,7 @@ class PayOrderServiceTest {
         // Act & Assert
         assertThatThrownBy(() -> payOrderService.execute(PUBLIC_ORDER_ID))
                 .isInstanceOf(InventoryNotFoundException.class);
-        
+
         verify(eventPublisher, never()).publish(any());
     }
 
@@ -133,7 +133,6 @@ class PayOrderServiceTest {
         payOrderService.execute(PUBLIC_ORDER_ID);
 
         // Assert
-        verify(eventPublisher).publish(argThat(event -> 
-            event.getEventType().equals("OrderStatusChanged")));
+        verify(eventPublisher).publish(argThat(event -> event.getEventType().equals("OrderStatusChanged")));
     }
 }

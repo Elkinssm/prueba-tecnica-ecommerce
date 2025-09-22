@@ -96,8 +96,7 @@ class UserModelTest {
                 "admin_password",
                 UserRole.ADMIN,
                 Instant.now(),
-                1
-        );
+                1);
 
         User regularUser = User.create("user", "user@example.com", "user_password");
 
@@ -149,7 +148,8 @@ class UserModelTest {
         // Given
         String emptyString = "";
 
-        // When & Then - These should still create users as validation might be handled elsewhere
+        // When & Then - These should still create users as validation might be handled
+        // elsewhere
         assertDoesNotThrow(() -> {
             User user1 = User.create(emptyString, "test@example.com", "password");
             assertEquals(emptyString, user1.getUsername());

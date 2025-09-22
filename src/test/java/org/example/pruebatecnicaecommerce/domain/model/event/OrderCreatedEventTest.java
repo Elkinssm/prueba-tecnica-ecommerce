@@ -89,7 +89,7 @@ class OrderCreatedEventTest {
         assertThat(event.getCustomerId()).isEqualTo(customerId);
         assertThat(event.getOrderTotal()).isEqualTo(orderTotal);
         assertThat(event.getItemCount()).isEqualTo(itemCount);
-        
+
         // Verify immutability by checking that getters return the same values
         UUID retrievedOrderId = event.getAggregateId();
         String retrievedPublicId = event.getPublicOrderId();

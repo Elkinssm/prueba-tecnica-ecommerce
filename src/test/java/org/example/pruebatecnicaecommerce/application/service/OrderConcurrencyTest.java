@@ -64,7 +64,8 @@ class OrderConcurrencyTest {
 
     @Test
     @DisplayName("Should handle concurrent order creation successfully")
-    void shouldHandleConcurrentOrderCreationSuccessfully() throws InterruptedException, ExecutionException, TimeoutException {
+    void shouldHandleConcurrentOrderCreationSuccessfully()
+            throws InterruptedException, ExecutionException, TimeoutException {
         // Arrange
         int numberOfThreads = 10;
         ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
@@ -79,9 +80,8 @@ class OrderConcurrencyTest {
         });
 
         CreateOrderRequest request = new CreateOrderRequest(
-            CUSTOMER_ID.toString(),
-            List.of(new ItemRequest(PRODUCT_ID.toString(), 1, new BigDecimal("29.99")))
-        );
+                CUSTOMER_ID.toString(),
+                List.of(new ItemRequest(PRODUCT_ID.toString(), 1, new BigDecimal("29.99"))));
 
         // Act
         List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -111,7 +111,8 @@ class OrderConcurrencyTest {
 
     @Test
     @DisplayName("Should handle concurrent inventory reservation correctly")
-    void shouldHandleConcurrentInventoryReservationCorrectly() throws InterruptedException, ExecutionException, TimeoutException {
+    void shouldHandleConcurrentInventoryReservationCorrectly()
+            throws InterruptedException, ExecutionException, TimeoutException {
         // Arrange
         int numberOfThreads = 5;
         int initialStock = 10;
@@ -122,7 +123,7 @@ class OrderConcurrencyTest {
         Inventory inventory = Inventory.create(PRODUCT_ID, initialStock);
         Order order = Order.create(CUSTOMER_ID);
         order.addItem(new org.example.pruebatecnicaecommerce.domain.model.order.OrderItem(
-            PRODUCT_ID, 3, new BigDecimal("29.99"))); // Each order needs 3 items
+                PRODUCT_ID, 3, new BigDecimal("29.99"))); // Each order needs 3 items
 
         when(orderRepository.findByPublicId(anyString())).thenReturn(Optional.of(order));
         when(inventoryRepository.findByProductId(PRODUCT_ID)).thenReturn(Optional.of(inventory));
@@ -159,7 +160,8 @@ class OrderConcurrencyTest {
 
     @Test
     @DisplayName("Should maintain data consistency under concurrent access")
-    void shouldMaintainDataConsistencyUnderConcurrentAccess() throws InterruptedException, ExecutionException, TimeoutException {
+    void shouldMaintainDataConsistencyUnderConcurrentAccess()
+            throws InterruptedException, ExecutionException, TimeoutException {
         // Arrange
         int numberOfThreads = 20;
         ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
@@ -171,9 +173,8 @@ class OrderConcurrencyTest {
         });
 
         CreateOrderRequest request = new CreateOrderRequest(
-            CUSTOMER_ID.toString(),
-            List.of(new ItemRequest(PRODUCT_ID.toString(), 1, new BigDecimal("29.99")))
-        );
+                CUSTOMER_ID.toString(),
+                List.of(new ItemRequest(PRODUCT_ID.toString(), 1, new BigDecimal("29.99"))));
 
         // Act
         CompletableFuture<Void>[] futures = new CompletableFuture[numberOfThreads];
@@ -215,14 +216,13 @@ class OrderConcurrencyTest {
         });
 
         CreateOrderRequest request = new CreateOrderRequest(
-            CUSTOMER_ID.toString(),
-            List.of(new ItemRequest(PRODUCT_ID.toString(), 1, new BigDecimal("29.99")))
-        );
+                CUSTOMER_ID.toString(),
+                List.of(new ItemRequest(PRODUCT_ID.toString(), 1, new BigDecimal("29.99"))));
 
         // Act
         long startTime = System.currentTimeMillis();
         CompletableFuture<Void>[] futures = new CompletableFuture[numberOfThreads];
-        
+
         for (int i = 0; i < numberOfThreads; i++) {
             futures[i] = CompletableFuture.runAsync(() -> {
                 try {

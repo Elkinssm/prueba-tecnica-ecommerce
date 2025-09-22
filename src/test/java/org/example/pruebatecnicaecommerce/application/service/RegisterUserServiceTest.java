@@ -60,8 +60,7 @@ class RegisterUserServiceTest {
                 encodedPassword,
                 UserRole.USER,
                 Instant.now(),
-                0
-        );
+                0);
 
         when(userRepository.findByUsername(request.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
@@ -101,8 +100,7 @@ class RegisterUserServiceTest {
         // When & Then
         UserAlreadyExistsException exception = assertThrows(
                 UserAlreadyExistsException.class,
-                () -> registerUserService.execute(request)
-        );
+                () -> registerUserService.execute(request));
 
         assertEquals("User already exists: username: existing_user", exception.getMessage());
 
@@ -126,8 +124,7 @@ class RegisterUserServiceTest {
         // When & Then
         UserAlreadyExistsException exception = assertThrows(
                 UserAlreadyExistsException.class,
-                () -> registerUserService.execute(request)
-        );
+                () -> registerUserService.execute(request));
 
         assertEquals("User already exists: email: existing@example.com", exception.getMessage());
 
@@ -155,8 +152,7 @@ class RegisterUserServiceTest {
                 encodedPassword,
                 UserRole.USER,
                 Instant.now(),
-                0
-        );
+                0);
 
         when(userRepository.findByUsername(request.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
@@ -172,9 +168,7 @@ class RegisterUserServiceTest {
         verify(passwordEncoder).encode("plaintext_password");
 
         // Verify the saved user has the encoded password
-        verify(userRepository).save(argThat(user -> 
-                encodedPassword.equals(user.getPasswordHash())
-        ));
+        verify(userRepository).save(argThat(user -> encodedPassword.equals(user.getPasswordHash())));
     }
 
     @Test
@@ -200,9 +194,7 @@ class RegisterUserServiceTest {
 
         // Then
         verify(jwtService).generateToken(request.getUsername(), "USER");
-        verify(userRepository).save(argThat(user -> 
-                UserRole.USER.equals(user.getRole())
-        ));
+        verify(userRepository).save(argThat(user -> UserRole.USER.equals(user.getRole())));
     }
 
     @Test

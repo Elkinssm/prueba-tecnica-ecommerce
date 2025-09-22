@@ -49,7 +49,7 @@ class LoginUserServiceTest {
         String username = "john_doe";
         String password = "correct_password";
         LoginRequest request = new LoginRequest(username, password);
-        
+
         String accessToken = "jwt_token_123";
         Instant expiresAt = Instant.now().plusSeconds(3600);
 
@@ -61,11 +61,11 @@ class LoginUserServiceTest {
                 password, // Note: In the actual implementation, this seems to compare plain text password
                 UserRole.USER,
                 Instant.now(),
-                0
-        );
+                0);
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(existingUser));
-        when(jwtService.generateToken(existingUser.getUsername(), existingUser.getRole().name())).thenReturn(accessToken);
+        when(jwtService.generateToken(existingUser.getUsername(), existingUser.getRole().name()))
+                .thenReturn(accessToken);
         when(jwtService.getExpirationTime()).thenReturn(expiresAt);
 
         // When
@@ -98,8 +98,7 @@ class LoginUserServiceTest {
         // When & Then
         AuthenticationException exception = assertThrows(
                 AuthenticationException.class,
-                () -> loginUserService.execute(request)
-        );
+                () -> loginUserService.execute(request));
 
         assertEquals("Invalid username or password", exception.getMessage());
 
@@ -125,16 +124,14 @@ class LoginUserServiceTest {
                 correctPassword,
                 UserRole.USER,
                 Instant.now(),
-                0
-        );
+                0);
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(existingUser));
 
         // When & Then
         AuthenticationException exception = assertThrows(
                 AuthenticationException.class,
-                () -> loginUserService.execute(request)
-        );
+                () -> loginUserService.execute(request));
 
         assertEquals("Invalid username or password", exception.getMessage());
 
@@ -150,7 +147,7 @@ class LoginUserServiceTest {
         String username = "admin";
         String password = "admin_password";
         LoginRequest request = new LoginRequest(username, password);
-        
+
         String accessToken = "admin_jwt_token";
         Instant expiresAt = Instant.now().plusSeconds(3600);
 
@@ -162,8 +159,7 @@ class LoginUserServiceTest {
                 password,
                 UserRole.ADMIN,
                 Instant.now(),
-                0
-        );
+                0);
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(adminUser));
         when(jwtService.generateToken(adminUser.getUsername(), adminUser.getRole().name())).thenReturn(accessToken);
@@ -193,7 +189,7 @@ class LoginUserServiceTest {
         String username = "test_user";
         String password = "test_password";
         LoginRequest request = new LoginRequest(username, password);
-        
+
         String expectedToken = "expected_jwt_token";
         Instant expectedExpiration = Instant.now().plusSeconds(3600);
 
@@ -205,8 +201,7 @@ class LoginUserServiceTest {
                 password,
                 UserRole.USER,
                 Instant.now(),
-                0
-        );
+                0);
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(jwtService.generateToken(user.getUsername(), "USER")).thenReturn(expectedToken);
@@ -240,16 +235,14 @@ class LoginUserServiceTest {
                 userPassword,
                 UserRole.USER,
                 Instant.now(),
-                0
-        );
+                0);
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
 
         // When & Then
         AuthenticationException exception = assertThrows(
                 AuthenticationException.class,
-                () -> loginUserService.execute(request)
-        );
+                () -> loginUserService.execute(request));
 
         assertEquals("Invalid username or password", exception.getMessage());
 

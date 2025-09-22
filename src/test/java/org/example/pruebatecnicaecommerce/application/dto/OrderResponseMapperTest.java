@@ -56,12 +56,12 @@ class OrderResponseMapperTest {
 
         // Assert
         assertThat(result.getItems()).hasSize(2);
-        
+
         ItemResponse firstItem = result.getItems().get(0);
         assertThat(firstItem.getProductId()).isEqualTo(PRODUCT_ID_1.toString());
         assertThat(firstItem.getQuantity()).isEqualTo(2);
         assertThat(firstItem.getUnitPrice()).isEqualTo(new BigDecimal("29.99"));
-        
+
         ItemResponse secondItem = result.getItems().get(1);
         assertThat(secondItem.getProductId()).isEqualTo(PRODUCT_ID_2.toString());
         assertThat(secondItem.getQuantity()).isEqualTo(1);

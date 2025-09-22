@@ -80,11 +80,11 @@ class CancelOrderServiceTest {
     void should_CancelOrder_When_OrderIsPaid() {
         // Arrange
         OrderItem orderItem = new OrderItem(PRODUCT_ID, 2, new BigDecimal("50.00"));
-        order.addItem(orderItem);  // Add item first while order is in CREATED state
+        order.addItem(orderItem); // Add item first while order is in CREATED state
         order.pay(); // Then set order to PAID status
-        
+
         Inventory inventory = Inventory.create(PRODUCT_ID, 10);
-        
+
         when(orderRepository.findByPublicId(PUBLIC_ID)).thenReturn(Optional.of(order));
         when(inventoryRepository.findByProductId(PRODUCT_ID)).thenReturn(Optional.of(inventory));
         doNothing().when(inventoryRepository).save(any(Inventory.class));
@@ -126,7 +126,7 @@ class CancelOrderServiceTest {
         // Arrange
         order.pay();
         order.ship(); // Set order to SHIPPED status
-        
+
         when(orderRepository.findByPublicId(PUBLIC_ID)).thenReturn(Optional.of(order));
 
         // Act & Assert
@@ -143,7 +143,7 @@ class CancelOrderServiceTest {
     void should_ThrowInvalidOrderStateTransitionException_When_OrderIsAlreadyCancelled() {
         // Arrange
         order.cancel(); // Set order to CANCELLED status
-        
+
         when(orderRepository.findByPublicId(PUBLIC_ID)).thenReturn(Optional.of(order));
 
         // Act & Assert

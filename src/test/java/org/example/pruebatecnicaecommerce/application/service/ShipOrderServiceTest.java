@@ -51,7 +51,7 @@ class ShipOrderServiceTest {
     void should_ShipOrder_When_OrderIsPaid() {
         // Arrange
         order.pay(); // Set order to PAID status
-        
+
         when(orderRepository.findByPublicId(PUBLIC_ID)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
 
@@ -105,7 +105,7 @@ class ShipOrderServiceTest {
         // Arrange
         order.pay();
         order.ship(); // Set order to SHIPPED status
-        
+
         when(orderRepository.findByPublicId(PUBLIC_ID)).thenReturn(Optional.of(order));
 
         // Act & Assert
@@ -122,7 +122,7 @@ class ShipOrderServiceTest {
     void should_ThrowInvalidOrderStateTransitionException_When_OrderIsCancelled() {
         // Arrange
         order.cancel(); // Set order to CANCELLED status
-        
+
         when(orderRepository.findByPublicId(PUBLIC_ID)).thenReturn(Optional.of(order));
 
         // Act & Assert
