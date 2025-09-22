@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/admin/cache")
+@RequestMapping("/api/v1/admin/cache")
 @RequiredArgsConstructor
 @Tag(name = "Cache", description = "Operaciones administrativas para limpiar caches de la plataforma")
 @SecurityRequirement(name = "bearerAuth")

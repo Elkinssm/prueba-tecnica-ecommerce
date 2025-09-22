@@ -22,37 +22,28 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 @Tag(name = "Users", description = "Endpoints para consultar informacion del usuario autenticado")
 @SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
-    private final UserRepository userRepository;
+        private final UserRepository userRepository;
 
-    @GetMapping("/me")
-    @Operation(
-            summary = "Obtener informacion del usuario actual",
-            description = "Devuelve los datos del usuario autenticado basados en el token JWT recibido"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Usuario encontrado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = UserResponse.class))),
-            @ApiResponse(responseCode = "401", description = "No autenticado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Usuario no encontrado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public ResponseEntity<UserResponse> getCurrentUser(
-            @Parameter(hidden = true) Authentication authentication) {
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException(username));
+        @GetMapping("/me")
+        @Operation(summary = "Obtener informacion del usuario actual", description = "Devuelve los datos del usuario autenticado basados en el token JWT recibido")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Usuario encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class))),
+                        @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+                        @ApiResponse(responseCode = "404", description = "Usuario no encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+        })
+        public ResponseEntity<UserResponse> getCurrentUser(
+                        @Parameter(hidden = true) Authentication authentication) {
+                String username = authentication.getName();
+                User user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new UserNotFoundException(username));
 
-        UserResponse response = UserResponseMapper.fromDomain(user);
-        return ResponseEntity.ok(response);
-    }
+                UserResponse response = UserResponseMapper.fromDomain(user);
+                return ResponseEntity.ok(response);
+        }
 }

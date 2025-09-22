@@ -22,53 +22,35 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "Endpoints publicos para registro y autenticacion de usuarios")
 public class AuthController {
 
-    private final RegisterUserService registerUserService;
-    private final LoginUserService loginUserService;
+        private final RegisterUserService registerUserService;
+        private final LoginUserService loginUserService;
 
-    @PostMapping("/register")
-    @Operation(
-            summary = "Registrar un nuevo usuario",
-            description = "Crea un usuario en la plataforma y devuelve el token JWT asociado"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Usuario registrado",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = AuthResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Datos invalidos",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Usuario ya existente",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        AuthResponse response = registerUserService.execute(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+        @PostMapping("/register")
+        @Operation(summary = "Registrar un nuevo usuario", description = "Crea un usuario en la plataforma y devuelve el token JWT asociado")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "201", description = "Usuario registrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponse.class))),
+                        @ApiResponse(responseCode = "400", description = "Datos invalidos", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+                        @ApiResponse(responseCode = "409", description = "Usuario ya existente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+        })
+        public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+                AuthResponse response = registerUserService.execute(request);
+                return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        }
 
-    @PostMapping("/login")
-    @Operation(
-            summary = "Autenticar un usuario",
-            description = "Valida las credenciales y retorna un token JWT valido"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Autenticacion exitosa",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = AuthResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Solicitud invalida",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Credenciales invalidas",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        AuthResponse response = loginUserService.execute(request);
-        return ResponseEntity.ok(response);
-    }
+        @PostMapping("/login")
+        @Operation(summary = "Autenticar un usuario", description = "Valida las credenciales y retorna un token JWT valido")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Autenticacion exitosa", content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponse.class))),
+                        @ApiResponse(responseCode = "400", description = "Solicitud invalida", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+                        @ApiResponse(responseCode = "401", description = "Credenciales invalidas", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+        })
+        public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+                AuthResponse response = loginUserService.execute(request);
+                return ResponseEntity.ok(response);
+        }
 }
