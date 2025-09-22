@@ -1,0 +1,856 @@
+{
+  "info": {
+    "_postman_id": "60525d9a-5cce-48fb-8795-58b8395e0000",
+    "name": "Ecommerce API Workflow",
+    "description": "Colección paso a paso para autenticación, inventario y ciclo completo de órdenes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "orderPublicId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "inventoryProductId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "initialInventoryStock",
+      "value": "0",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "console.log('Suite ecommerce - inicio');",
+          "console.log('Timestamp: ' + new Date().toISOString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Tiempo de respuesta < 5s', function () { pm.expect(pm.response.responseTime).to.be.below(5000); });"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "1.1 Login administrador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Obtiene token administrativo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"admin\",\"password\":\"admin123\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('adminToken', data.accessToken || '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.2 Registrar usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Crea un usuario cliente y obtiene token inicial.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"testuser\",\"password\":\"testpass123\",\"email\":\"test@example.com\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('authToken', data.accessToken || '');",
+                  "if (data.publicId) { pm.collectionVariables.set('customerId', data.publicId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.3 Login usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Refresca token y asegura customerId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"testuser\",\"password\":\"testpass123\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('authToken', data.accessToken || '');",
+                  "if (data.publicId) { pm.collectionVariables.set('customerId', data.publicId); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Inventario",
+      "item": [
+        {
+          "name": "2.1 Listar inventario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/inventory",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory"]
+            },
+            "description": "Lista todo el inventario."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const items = pm.response.json();",
+                  "pm.test('Es arreglo', function () { pm.expect(items).to.be.an('array'); });",
+                  "if (items.length > 0) {",
+                  "  pm.collectionVariables.set('inventoryProductId', items[0].productId || '');",
+                  "  pm.collectionVariables.set('initialInventoryStock', (items[0].stock ?? 0).toString());",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.2 Consultar producto",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/{{inventoryProductId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "{{inventoryProductId}}"]
+            },
+            "description": "Detalle de inventario del producto almacenado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const item = pm.response.json();",
+                  "pm.expect(item).to.have.property('productId');",
+                  "pm.expect(item).to.have.property('stock');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.3 Incrementar stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/{{inventoryProductId}}/increase",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "{{inventoryProductId}}", "increase"],
+              "query": [
+                {
+                  "key": "quantity",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Simula reabastecimiento."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const item = pm.response.json();",
+                  "const prev = parseInt(pm.collectionVariables.get('initialInventoryStock') || '0', 10);",
+                  "pm.expect(item.stock).to.be.above(prev);",
+                  "pm.collectionVariables.set('initialInventoryStock', item.stock.toString());"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.4 Reducir stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/{{inventoryProductId}}/decrease",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "{{inventoryProductId}}", "decrease"],
+              "query": [
+                {
+                  "key": "quantity",
+                  "value": "2"
+                }
+              ]
+            },
+            "description": "Reduce stock validando locking optimista."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const item = pm.response.json();",
+                  "pm.expect(item.stock).to.be.at.least(0);",
+                  "pm.collectionVariables.set('initialInventoryStock', item.stock.toString());"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Ciclo de órdenes",
+      "item": [
+        {
+          "name": "3.1 Crear orden",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Crea una orden y almacena el ID público.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"productCode\":\"PROD-11111111\",\"quantity\":2,\"unitPrice\":49.99},{\"productCode\":\"PROD-22222222\",\"quantity\":1,\"unitPrice\":129.99}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "const order = pm.response.json();",
+                  "pm.collectionVariables.set('orderPublicId', order.id || '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.2 Consultar orden",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderPublicId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderPublicId}}"]
+            },
+            "description": "Verifica datos de la orden creada."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.3 Estado actual",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderPublicId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderPublicId}}", "status"]
+            },
+            "description": "Estado textual de la orden."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.4 Pagar orden",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderPublicId}}/pay",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderPublicId}}", "pay"]
+            },
+            "description": "Transición CREATED -> PAID."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.5 Cancelar orden",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderPublicId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderPublicId}}", "cancel"]
+            },
+            "description": "Transición a CANCELLED (libera inventario si aplica)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.6 Volver a crear orden",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Crea otra orden para continuar el flujo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"productCode\":\"PROD-11111111\",\"quantity\":1,\"unitPrice\":49.99}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "const order = pm.response.json();",
+                  "pm.collectionVariables.set('orderPublicId', order.id || '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.7 Enviar orden",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderPublicId}}/ship",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderPublicId}}", "ship"]
+            },
+            "description": "Transición PAID -> SHIPPED (requiere haber pagado previamente)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.8 Historial",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderPublicId}}/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderPublicId}}", "history"]
+            },
+            "description": "Historial de cambios de estado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Búsqueda y filtros",
+      "item": [
+        {
+          "name": "4.1 Órdenes por cliente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/customer/{{customerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "customer", "{{customerId}}"]
+            },
+            "description": "Filtra por cliente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.2 Órdenes por estado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/status/SHIPPED",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "status", "SHIPPED"]
+            },
+            "description": "Filtra por estado SHIPPED."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.3 Búsqueda avanzada",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "search"],
+              "query": [
+                {
+                  "key": "customerId",
+                  "value": "{{customerId}}"
+                },
+                {
+                  "key": "status",
+                  "value": "SHIPPED"
+                }
+              ]
+            },
+            "description": "Consulta por customerId + status."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Perfil",
+      "item": [
+        {
+          "name": "5.1 Perfil actual",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Datos del usuario autenticado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const profile = pm.response.json();",
+                  "pm.expect(profile).to.have.property('username');",
+                  "pm.expect(profile).to.have.property('role');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Manejo de errores",
+      "item": [
+        {
+          "name": "6.1 Orden con producto inválido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Valida error al usar un producto inexistente.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"productCode\":\"INVALID-PRODUCT\",\"quantity\":1,\"unitPrice\":10}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 4xx', function () { pm.expect([400,404,409]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.2 Órdenes sin token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Debe responder 401."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.3 Reducir stock excesivo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/{{inventoryProductId}}/decrease",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "{{inventoryProductId}}", "decrease"],
+              "query": [
+                {
+                  "key": "quantity",
+                  "value": "999999"
+                }
+              ]
+            },
+            "description": "Esperado error por falta de stock."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 4xx', function () { pm.expect([400,409]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
