@@ -80,7 +80,6 @@ class OrderConcurrencyTest {
         });
 
         CreateOrderRequest request = new CreateOrderRequest(
-                CUSTOMER_ID.toString(),
                 List.of(new ItemRequest(PRODUCT_ID.toString(), 1, new BigDecimal("29.99"))));
 
         // Act
@@ -88,7 +87,7 @@ class OrderConcurrencyTest {
         for (int i = 0; i < numberOfThreads; i++) {
             futures.add(CompletableFuture.runAsync(() -> {
                 try {
-                    OrderResponse response = createOrderService.execute(request);
+                    OrderResponse response = createOrderService.execute(request, CUSTOMER_ID.toString());
                     if (response != null) {
                         successfulOrders.incrementAndGet();
                     }
@@ -173,7 +172,6 @@ class OrderConcurrencyTest {
         });
 
         CreateOrderRequest request = new CreateOrderRequest(
-                CUSTOMER_ID.toString(),
                 List.of(new ItemRequest(PRODUCT_ID.toString(), 1, new BigDecimal("29.99"))));
 
         // Act
@@ -181,7 +179,7 @@ class OrderConcurrencyTest {
         for (int i = 0; i < numberOfThreads; i++) {
             futures[i] = CompletableFuture.runAsync(() -> {
                 try {
-                    createOrderService.execute(request);
+                    createOrderService.execute(request, CUSTOMER_ID.toString());
                 } catch (Exception e) {
                     // Ignore exceptions for this consistency test
                 }
@@ -216,7 +214,6 @@ class OrderConcurrencyTest {
         });
 
         CreateOrderRequest request = new CreateOrderRequest(
-                CUSTOMER_ID.toString(),
                 List.of(new ItemRequest(PRODUCT_ID.toString(), 1, new BigDecimal("29.99"))));
 
         // Act
@@ -226,7 +223,7 @@ class OrderConcurrencyTest {
         for (int i = 0; i < numberOfThreads; i++) {
             futures[i] = CompletableFuture.runAsync(() -> {
                 try {
-                    createOrderService.execute(request);
+                    createOrderService.execute(request, CUSTOMER_ID.toString());
                     completedOperations.incrementAndGet();
                 } catch (Exception e) {
                     // Log but don't fail the test

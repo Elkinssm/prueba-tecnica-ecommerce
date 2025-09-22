@@ -1,20 +1,17 @@
 package org.example.pruebatecnicaecommerce.application.dto;
 
 import lombok.Value;
-import org.example.pruebatecnicaecommerce.shared.utils.UuidUtils;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 @Value
 public class ItemRequest {
 
-    @NotBlank(message = "Product ID is required")
-    @Pattern(regexp = UuidUtils.UUID_REGEX, message = "Product ID must be a valid UUID")
-    String productId;
+    @NotBlank(message = "Product code is required")
+    String productCode; // Cambio: ahora usa código amigable como PROD-11111111
 
     @Positive(message = "Quantity must be positive")
     int quantity;

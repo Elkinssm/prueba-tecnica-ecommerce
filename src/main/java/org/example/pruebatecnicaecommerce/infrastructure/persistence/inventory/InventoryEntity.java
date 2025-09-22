@@ -9,7 +9,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "inventory", indexes = {
-        @Index(name = "idx_inventory_product", columnList = "product_id", unique = true)
+        @Index(name = "idx_inventory_product", columnList = "product_id", unique = true),
+        @Index(name = "idx_inventory_product_code", columnList = "product_code", unique = true)
 })
 @Getter
 @Setter
@@ -23,6 +24,9 @@ public class InventoryEntity {
 
     @Column(name = "product_id", columnDefinition = "VARCHAR(36)", nullable = false, unique = true)
     private UUID productId;
+
+    @Column(name = "product_code", length = 20, nullable = false, unique = true)
+    private String productCode;
 
     @Column(nullable = false)
     private int stock;

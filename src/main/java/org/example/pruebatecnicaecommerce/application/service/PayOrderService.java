@@ -4,13 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.example.pruebatecnicaecommerce.application.dto.OrderResponse;
 import org.example.pruebatecnicaecommerce.application.dto.OrderResponseMapper;
 import org.example.pruebatecnicaecommerce.domain.model.event.OrderStatusChangedEvent;
-import org.example.pruebatecnicaecommerce.domain.model.inventory.Inventory;
-import org.example.pruebatecnicaecommerce.domain.model.inventory.InventoryRepository;
 import org.example.pruebatecnicaecommerce.domain.model.order.Order;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderRepository;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderStatus;
 import org.example.pruebatecnicaecommerce.domain.service.EventPublisher;
-import org.example.pruebatecnicaecommerce.shared.error.InventoryNotFoundException;
 import org.example.pruebatecnicaecommerce.shared.error.OrderNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,25 +18,21 @@ import org.springframework.transaction.annotation.Transactional;
 public class PayOrderService {
 
     private final OrderRepository orderRepository;
-    private final InventoryRepository inventoryRepository;
     private final EventPublisher eventPublisher;
 
     public OrderResponse execute(String publicOrderId) {
         Order order = orderRepository.findByPublicId(publicOrderId)
                 .orElseThrow(() -> new OrderNotFoundException(publicOrderId));
 
+        // Capture previous status before changing
         OrderStatus previousStatus = order.getStatus();
 
-        order.getItems().forEach(item -> {
-            Inventory inventory = inventoryRepository.findByProductId(item.getProductId())
-                    .orElseThrow(() -> new InventoryNotFoundException(item.getProductId()));
-            inventory.reserve(item.getQuantity());
-            inventoryRepository.save(inventory);
-        });
-
+        // Payment should only change order status, not modify inventory again
+        // Inventory was already reserved when order was created
         order.pay();
         Order savedOrder = orderRepository.save(order);
 
+        // Publish event for status change (for notifications and history tracking)
         OrderStatusChangedEvent event = new OrderStatusChangedEvent(
                 savedOrder.getId(),
                 savedOrder.getPublicId(),

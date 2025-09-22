@@ -2,11 +2,13 @@ package org.example.pruebatecnicaecommerce.domain.model.order;
 
 import lombok.Value;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Value
-public class OrderItem {
+public class OrderItem implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     UUID productId;
     int quantity;

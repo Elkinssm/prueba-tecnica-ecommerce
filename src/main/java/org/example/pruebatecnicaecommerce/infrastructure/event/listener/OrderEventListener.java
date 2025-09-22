@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.pruebatecnicaecommerce.domain.model.event.OrderCreatedEvent;
 import org.example.pruebatecnicaecommerce.domain.model.event.OrderStatusChangedEvent;
 import org.example.pruebatecnicaecommerce.infrastructure.notification.NotificationService;
+import org.example.pruebatecnicaecommerce.infrastructure.service.OrderHistoryService;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class OrderEventListener {
 
     private final NotificationService notificationService;
+    private final OrderHistoryService orderHistoryService;
 
     @EventListener
     public void handleOrderCreated(OrderCreatedEvent event) {
@@ -32,6 +34,12 @@ public class OrderEventListener {
     public void handleOrderStatusChanged(OrderStatusChangedEvent event) {
         log.info("Processing OrderStatusChangedEvent for order: {} - {} -> {}",
                 event.getPublicOrderId(), event.getPreviousStatus(), event.getNewStatus());
+
+        // Record status change in history
+        orderHistoryService.recordStatusChange(
+                event.getAggregateId(),
+                event.getPreviousStatus(),
+                event.getNewStatus());
 
         notificationService.sendOrderStatusChangedNotification(
                 event.getCustomerId().toString(),

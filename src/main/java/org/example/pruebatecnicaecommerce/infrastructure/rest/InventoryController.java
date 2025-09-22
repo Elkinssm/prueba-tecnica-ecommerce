@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.constraints.Positive;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -16,6 +17,12 @@ import java.util.UUID;
 public class InventoryController {
 
         private final InventoryRepository inventoryRepository;
+
+        @GetMapping
+        public ResponseEntity<List<Inventory>> getAllInventory() {
+                List<Inventory> inventoryList = inventoryRepository.findAll();
+                return ResponseEntity.ok(inventoryList);
+        }
 
         @GetMapping("/{productId}")
         public ResponseEntity<Inventory> getByProductId(@PathVariable String productId) {
@@ -33,7 +40,7 @@ public class InventoryController {
                 Inventory inventory = inventoryRepository.findByProductId(productUuid)
                                 .orElseGet(() -> Inventory.create(productUuid, 0));
 
-                inventory.release(-quantity);
+                inventory.release(quantity); // Corregido: usar quantity directamente
                 inventoryRepository.save(inventory);
                 return ResponseEntity.ok(inventory);
         }

@@ -24,11 +24,13 @@ public class ShipOrderService {
         Order order = orderRepository.findByPublicId(publicOrderId)
                 .orElseThrow(() -> new OrderNotFoundException(publicOrderId));
 
+        // Capture previous status before changing
         OrderStatus previousStatus = order.getStatus();
 
         order.ship();
         Order savedOrder = orderRepository.save(order);
 
+        // Publish event for status change (for notifications and history tracking)
         OrderStatusChangedEvent event = new OrderStatusChangedEvent(
                 savedOrder.getId(),
                 savedOrder.getPublicId(),

@@ -5,13 +5,20 @@ import org.example.pruebatecnicaecommerce.application.dto.CreateOrderRequest;
 import org.example.pruebatecnicaecommerce.application.dto.OrderResponse;
 import org.example.pruebatecnicaecommerce.application.dto.OrderResponseMapper;
 import org.example.pruebatecnicaecommerce.domain.model.event.OrderCreatedEvent;
+import org.example.pruebatecnicaecommerce.domain.model.event.OrderStatusChangedEvent;
+import org.example.pruebatecnicaecommerce.domain.model.inventory.Inventory;
+import org.example.pruebatecnicaecommerce.domain.model.inventory.InventoryRepository;
 import org.example.pruebatecnicaecommerce.domain.model.order.Order;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderItem;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderRepository;
 import org.example.pruebatecnicaecommerce.domain.service.EventPublisher;
+import org.example.pruebatecnicaecommerce.shared.error.InventoryNotFoundException;
 import org.example.pruebatecnicaecommerce.shared.utils.UuidUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -19,25 +26,48 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateOrderService {
 
     private final OrderRepository orderRepository;
+    private final InventoryRepository inventoryRepository;
     private final EventPublisher eventPublisher;
 
-    public OrderResponse execute(CreateOrderRequest request) {
-        Order order = Order.create(UuidUtils.fromString(request.getCustomerId()));
+    public OrderResponse execute(CreateOrderRequest request, String customerPublicId) {
+        Order order = Order.create(UuidUtils.fromString(customerPublicId));
 
-        request.getItems().forEach(item -> order.addItem(new OrderItem(
-                UuidUtils.fromString(item.getProductId()),
-                item.getQuantity(),
-                item.getUnitPrice())));
+        request.getItems().forEach(item -> {
+            // Resolve productCode to UUID
+            Inventory inventory = inventoryRepository.findByProductCode(item.getProductCode())
+                    .orElseThrow(() -> new IllegalArgumentException("Product not found: " + item.getProductCode()));
+
+            UUID productId = inventory.getProductId();
+
+            // Use price from request if provided, otherwise use default price
+            BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.valueOf(10.00);
+
+            order.addItem(new OrderItem(
+                    productId,
+                    item.getQuantity(),
+                    unitPrice));
+        });
 
         Order savedOrder = orderRepository.save(order);
 
-        OrderCreatedEvent event = new OrderCreatedEvent(
+        // Publish OrderCreated event for notifications
+        OrderCreatedEvent createdEvent = new OrderCreatedEvent(
                 savedOrder.getId(),
                 savedOrder.getPublicId(),
                 savedOrder.getCustomerId(),
                 savedOrder.getTotal(),
                 savedOrder.getItems().size());
-        eventPublisher.publish(event);
+        eventPublisher.publish(createdEvent);
+
+        // Publish initial status change event for history tracking
+        OrderStatusChangedEvent statusEvent = new OrderStatusChangedEvent(
+                savedOrder.getId(),
+                savedOrder.getPublicId(),
+                savedOrder.getCustomerId(),
+                null, // No previous status for initial creation
+                savedOrder.getStatus(),
+                savedOrder.getTotal());
+        eventPublisher.publish(statusEvent);
 
         return OrderResponseMapper.fromDomain(savedOrder);
     }

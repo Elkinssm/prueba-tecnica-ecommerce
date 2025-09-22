@@ -28,6 +28,7 @@ public class CancelOrderService {
         Order order = orderRepository.findByPublicId(publicOrderId)
                 .orElseThrow(() -> new OrderNotFoundException(publicOrderId));
 
+        // Capture previous status before changing
         OrderStatus previousStatus = order.getStatus();
 
         if (order.getStatus() == OrderStatus.PAID) {
@@ -42,6 +43,7 @@ public class CancelOrderService {
         order.cancel();
         Order savedOrder = orderRepository.save(order);
 
+        // Publish event for status change (for notifications and history tracking)
         OrderStatusChangedEvent event = new OrderStatusChangedEvent(
                 savedOrder.getId(),
                 savedOrder.getPublicId(),

@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.pruebatecnicaecommerce.application.dto.OrderStatusHistoryResponse;
 import org.example.pruebatecnicaecommerce.domain.model.order.Order;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderRepository;
+import org.example.pruebatecnicaecommerce.infrastructure.persistence.order.JpaOrderStatusHistoryRepository;
+import org.example.pruebatecnicaecommerce.infrastructure.persistence.order.OrderStatusHistoryEntity;
 import org.example.pruebatecnicaecommerce.shared.error.OrderNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,27 +21,36 @@ import java.util.List;
 public class GetOrderHistoryService {
 
     private final OrderRepository orderRepository;
+    private final JpaOrderStatusHistoryRepository historyRepository;
 
     public List<OrderStatusHistoryResponse> execute(String publicOrderId) {
         Order order = orderRepository.findByPublicId(publicOrderId)
                 .orElseThrow(() -> new OrderNotFoundException(publicOrderId));
 
+        // Get real history from database
+        List<OrderStatusHistoryEntity> historyEntities = historyRepository
+                .findByOrderIdOrderByChangedAtAsc(order.getId());
+
         List<OrderStatusHistoryResponse> history = new ArrayList<>();
 
-        LocalDateTime createdAt = LocalDateTime.ofInstant(order.getCreatedAt(), ZoneId.systemDefault());
-
-        history.add(OrderStatusHistoryResponse.builder()
-                .status("CREATED")
-                .changedAt(createdAt)
-                .previousStatus(null)
-                .build());
-
-        if (!order.getStatus().name().equals("CREATED")) {
+        if (historyEntities.isEmpty()) {
+            // Fallback: if no history exists, create initial CREATED entry
+            LocalDateTime createdAt = LocalDateTime.ofInstant(order.getCreatedAt(), ZoneId.systemDefault());
             history.add(OrderStatusHistoryResponse.builder()
-                    .status(order.getStatus().name())
-                    .changedAt(createdAt.plusMinutes(5))
-                    .previousStatus("CREATED")
+                    .status("CREATED")
+                    .changedAt(createdAt)
+                    .previousStatus(null)
                     .build());
+        } else {
+            // Convert history entities to response DTOs
+            for (OrderStatusHistoryEntity entity : historyEntities) {
+                LocalDateTime changedAt = LocalDateTime.ofInstant(entity.getChangedAt(), ZoneId.systemDefault());
+                history.add(OrderStatusHistoryResponse.builder()
+                        .status(entity.getNewStatus().name())
+                        .changedAt(changedAt)
+                        .previousStatus(entity.getPreviousStatus() != null ? entity.getPreviousStatus().name() : null)
+                        .build());
+            }
         }
 
         return history;
