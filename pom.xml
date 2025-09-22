@@ -92,6 +92,11 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -119,6 +124,80 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.10</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <!-- Excluir capas de infraestructura -->
+                                <exclude>**/infrastructure/**</exclude>
+                                <exclude>**/config/**</exclude>
+                                <exclude>**/rest/**</exclude>
+                                <exclude>**/persistence/**</exclude>
+                                <!-- Excluir DTOs y mappers (sin lógica de negocio) -->
+                                <exclude>**/dto/**</exclude>
+                                <exclude>**/mapper/**</exclude>
+                                <!-- Excluir aplicación principal -->
+                                <exclude>**/PruebaTecnicaEcommerceApplication.class</exclude>
+                                <!-- Excluir excepciones simples -->
+                                <exclude>**/shared/error/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <!-- Excluir capas de infraestructura -->
+                                <exclude>**/infrastructure/**</exclude>
+                                <exclude>**/config/**</exclude>
+                                <exclude>**/rest/**</exclude>
+                                <exclude>**/persistence/**</exclude>
+                                <!-- Excluir DTOs y mappers (sin lógica de negocio) -->
+                                <exclude>**/dto/**</exclude>
+                                <exclude>**/mapper/**</exclude>
+                                <!-- Excluir aplicación principal -->
+                                <exclude>**/PruebaTecnicaEcommerceApplication.class</exclude>
+                                <!-- Excluir excepciones simples -->
+                                <exclude>**/shared/error/**</exclude>
+                            </excludes>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.75</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
