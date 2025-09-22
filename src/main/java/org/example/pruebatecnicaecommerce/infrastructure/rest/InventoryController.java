@@ -7,6 +7,8 @@ import org.example.pruebatecnicaecommerce.shared.utils.UuidUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
 import java.util.UUID;
@@ -14,6 +16,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/inventory")
 @RequiredArgsConstructor
+@Tag(name = "Inventory", description = "Consultas relacionadas con el inventario disponible")
+@SecurityRequirement(name = "bearerAuth")
 public class InventoryController {
 
         private final InventoryRepository inventoryRepository;

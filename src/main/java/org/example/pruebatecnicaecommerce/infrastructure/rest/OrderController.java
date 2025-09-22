@@ -1,5 +1,17 @@
 package org.example.pruebatecnicaecommerce.infrastructure.rest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.pruebatecnicaecommerce.application.dto.CreateOrderRequest;
 import org.example.pruebatecnicaecommerce.application.dto.OrderFilterCriteria;
@@ -16,6 +28,7 @@ import org.example.pruebatecnicaecommerce.application.service.SearchOrdersServic
 import org.example.pruebatecnicaecommerce.application.service.ShipOrderService;
 import org.example.pruebatecnicaecommerce.domain.model.user.User;
 import org.example.pruebatecnicaecommerce.domain.model.user.UserRepository;
+import org.example.pruebatecnicaecommerce.shared.error.ErrorResponse;
 import org.example.pruebatecnicaecommerce.shared.error.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +42,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/orders")
 @RequiredArgsConstructor
+@Tag(name = "Orders", description = "Operaciones para gestionar ordenes del ecommerce")
+@SecurityRequirement(name = "bearerAuth")
 public class OrderController {
 
     private final CreateOrderService createOrderService;
@@ -79,19 +94,64 @@ public class OrderController {
     }
 
     @GetMapping("/{publicOrderId}")
-    public ResponseEntity<OrderResponse> getOrder(@PathVariable String publicOrderId) {
+    @Operation(
+            summary = "Obtener detalle de una orden",
+            description = "Devuelve la informacion completa de una orden"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Detalle de orden",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = OrderResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Orden no encontrada",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<OrderResponse> getOrder(
+            @Parameter(description = "Identificador publico de la orden", required = true,
+                    example = "ORD-20250921-OEUI")
+            @PathVariable String publicOrderId) {
         OrderResponse response = getOrderService.execute(publicOrderId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{publicOrderId}/status")
-    public ResponseEntity<String> getOrderStatus(@PathVariable String publicOrderId) {
+    @Operation(
+            summary = "Consultar estado actual de una orden",
+            description = "Devuelve el estado actual de la orden en formato texto"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Estado actual",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(type = "string", example = "PAID"))),
+            @ApiResponse(responseCode = "404", description = "Orden no encontrada",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<String> getOrderStatus(
+            @Parameter(description = "Identificador publico de la orden", required = true,
+                    example = "ORD-20250921-OEUI")
+            @PathVariable String publicOrderId) {
         String status = getOrderStatusService.execute(publicOrderId);
         return ResponseEntity.ok(status);
     }
 
     @GetMapping("/{publicOrderId}/history")
-    public ResponseEntity<List<OrderStatusHistoryResponse>> getOrderHistory(@PathVariable String publicOrderId) {
+    @Operation(
+            summary = "Consultar historial de estados",
+            description = "Devuelve el historial completo de cambios de estado de la orden"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Historial de estados",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = OrderStatusHistoryResponse.class)))),
+            @ApiResponse(responseCode = "404", description = "Orden no encontrada",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<List<OrderStatusHistoryResponse>> getOrderHistory(
+            @Parameter(description = "Identificador publico de la orden", required = true,
+                    example = "ORD-20250921-OEUI")
+            @PathVariable String publicOrderId) {
         List<OrderStatusHistoryResponse> history = getOrderHistoryService.execute(publicOrderId);
         return ResponseEntity.ok(history);
     }

@@ -5,9 +5,14 @@ import org.springframework.cache.CacheManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/admin/cache")
 @RequiredArgsConstructor
+@Tag(name = "Cache", description = "Operaciones administrativas para limpiar caches de la plataforma")
+@SecurityRequirement(name = "bearerAuth")
 public class CacheController {
 
     private final CacheManager cacheManager;
