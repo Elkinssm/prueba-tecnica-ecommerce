@@ -76,6 +76,34 @@ class CancelOrderServiceTest {
     }
 
     @Test
+    @DisplayName("Should cancel created order and release inventory")
+    void should_CancelCreatedOrder_When_InventoryWasReserved() {
+        // Arrange
+        OrderItem orderItem = new OrderItem(PRODUCT_ID, 3, new BigDecimal("30.00"));
+        order.addItem(orderItem);
+
+        Inventory inventory = spy(Inventory.create(PRODUCT_ID, 10));
+        inventory.reserve(orderItem.getQuantity());
+
+        when(orderRepository.findByPublicId(PUBLIC_ID)).thenReturn(Optional.of(order));
+        when(inventoryRepository.findByProductId(PRODUCT_ID)).thenReturn(Optional.of(inventory));
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+
+        // Act
+        OrderResponse result = cancelOrderService.execute(PUBLIC_ID);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED.toString());
+
+        verify(inventoryRepository).findByProductId(PRODUCT_ID);
+        verify(inventory).release(orderItem.getQuantity());
+        verify(inventoryRepository).save(inventory);
+        verify(orderRepository).save(order);
+        verify(eventPublisher).publish(any());
+    }
+
+    @Test
     @DisplayName("Should cancel paid order and release inventory")
     void should_CancelOrder_When_OrderIsPaid() {
         // Arrange
@@ -83,11 +111,11 @@ class CancelOrderServiceTest {
         order.addItem(orderItem); // Add item first while order is in CREATED state
         order.pay(); // Then set order to PAID status
 
-        Inventory inventory = Inventory.create(PRODUCT_ID, 10);
+        Inventory inventory = spy(Inventory.create(PRODUCT_ID, 10));
+        inventory.reserve(orderItem.getQuantity());
 
         when(orderRepository.findByPublicId(PUBLIC_ID)).thenReturn(Optional.of(order));
         when(inventoryRepository.findByProductId(PRODUCT_ID)).thenReturn(Optional.of(inventory));
-        doNothing().when(inventoryRepository).save(any(Inventory.class));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
 
         // Act
@@ -99,6 +127,7 @@ class CancelOrderServiceTest {
 
         verify(orderRepository).findByPublicId(PUBLIC_ID);
         verify(inventoryRepository).findByProductId(PRODUCT_ID);
+        verify(inventory).release(orderItem.getQuantity());
         verify(inventoryRepository).save(inventory);
         verify(orderRepository).save(order);
         verify(eventPublisher).publish(any());

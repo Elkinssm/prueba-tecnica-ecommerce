@@ -12,7 +12,6 @@ import org.example.pruebatecnicaecommerce.domain.model.order.Order;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderItem;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderRepository;
 import org.example.pruebatecnicaecommerce.domain.service.EventPublisher;
-import org.example.pruebatecnicaecommerce.shared.error.InventoryNotFoundException;
 import org.example.pruebatecnicaecommerce.shared.utils.UuidUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +34,9 @@ public class CreateOrderService {
         request.getItems().forEach(item -> {
             Inventory inventory = inventoryRepository.findByProductCode(item.getProductCode())
                     .orElseThrow(() -> new IllegalArgumentException("Product not found: " + item.getProductCode()));
+
+            inventory.reserve(item.getQuantity());
+            inventoryRepository.save(inventory);
 
             UUID productId = inventory.getProductId();
 

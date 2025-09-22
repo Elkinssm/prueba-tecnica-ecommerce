@@ -31,13 +31,8 @@ public class CancelOrderService {
         // Capture previous status before changing
         OrderStatus previousStatus = order.getStatus();
 
-        if (order.getStatus() == OrderStatus.PAID) {
-            order.getItems().forEach(item -> {
-                Inventory inventory = inventoryRepository.findByProductId(item.getProductId())
-                        .orElseThrow(() -> new InventoryNotFoundException(item.getProductId()));
-                inventory.release(item.getQuantity());
-                inventoryRepository.save(inventory);
-            });
+        if (hasReservedInventory(previousStatus)) {
+            releaseReservedInventory(order);
         }
 
         order.cancel();
@@ -54,5 +49,18 @@ public class CancelOrderService {
         eventPublisher.publish(event);
 
         return OrderResponseMapper.fromDomain(savedOrder);
+    }
+
+    private boolean hasReservedInventory(OrderStatus status) {
+        return status == OrderStatus.CREATED || status == OrderStatus.PAID;
+    }
+
+    private void releaseReservedInventory(Order order) {
+        order.getItems().forEach(item -> {
+            Inventory inventory = inventoryRepository.findByProductId(item.getProductId())
+                    .orElseThrow(() -> new InventoryNotFoundException(item.getProductId()));
+            inventory.release(item.getQuantity());
+            inventoryRepository.save(inventory);
+        });
     }
 }

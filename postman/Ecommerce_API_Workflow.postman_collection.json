@@ -2,13 +2,13 @@
   "info": {
     "_postman_id": "60525d9a-5cce-48fb-8795-58b8395e0000",
     "name": "Ecommerce API Workflow",
-    "description": "Colecci髇 paso a paso para autenticaci髇, inventario y ciclo completo de 髍denes.",
+    "description": "Colecci贸n paso a paso para autenticaci贸n, inventario y ciclo completo de 贸rdenes.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080",
+      "value": "http://localhost:8080/api/v1",
       "type": "string"
     },
     {
@@ -65,7 +65,7 @@
   ],
   "item": [
     {
-      "name": "1. Autenticaci髇",
+      "name": "1. Autenticaci贸n",
       "item": [
         {
           "name": "1.1 Login administrador",
@@ -79,13 +79,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
             },
             "description": "Obtiene token administrativo.",
             "body": {
@@ -124,13 +119,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "register"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
             },
             "description": "Crea un usuario cliente y obtiene token inicial.",
             "body": {
@@ -170,13 +160,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
             },
             "description": "Refresca token y asegura customerId.",
             "body": {
@@ -221,12 +206,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/inventory",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "inventory"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory"]
             },
             "description": "Lista todo el inventario."
           },
@@ -260,13 +241,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/inventory/{{inventoryProductId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "inventory",
-                "{{inventoryProductId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "{{inventoryProductId}}"]
             },
             "description": "Detalle de inventario del producto almacenado."
           },
@@ -297,14 +273,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/inventory/{{inventoryProductId}}/increase",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "inventory",
-                "{{inventoryProductId}}",
-                "increase"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "{{inventoryProductId}}", "increase"],
               "query": [
                 {
                   "key": "quantity",
@@ -342,14 +312,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/inventory/{{inventoryProductId}}/decrease",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "inventory",
-                "{{inventoryProductId}}",
-                "decrease"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "{{inventoryProductId}}", "decrease"],
               "query": [
                 {
                   "key": "quantity",
@@ -377,7 +341,7 @@
       ]
     },
     {
-      "name": "3. Ciclo de 髍denes",
+      "name": "3. Ciclo de 贸rdenes",
       "item": [
         {
           "name": "3.1 Crear orden",
@@ -395,14 +359,10 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
             },
-            "description": "Crea una orden y almacena el ID p鷅lico.",
+            "description": "Crea una orden y almacena el ID p煤blico.",
             "body": {
               "mode": "raw",
               "raw": "{\"items\":[{\"productCode\":\"PROD-11111111\",\"quantity\":2,\"unitPrice\":49.99},{\"productCode\":\"PROD-22222222\",\"quantity\":1,\"unitPrice\":129.99}]}",
@@ -439,13 +399,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/orders/{{orderPublicId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "{{orderPublicId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderPublicId}}"]
             },
             "description": "Verifica datos de la orden creada."
           },
@@ -473,14 +428,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/orders/{{orderPublicId}}/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "{{orderPublicId}}",
-                "status"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderPublicId}}", "status"]
             },
             "description": "Estado textual de la orden."
           },
@@ -508,16 +457,10 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/orders/{{orderPublicId}}/pay",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "{{orderPublicId}}",
-                "pay"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderPublicId}}", "pay"]
             },
-            "description": "Transici髇 CREATED -> PAID."
+            "description": "Transici贸n CREATED -> PAID."
           },
           "event": [
             {
@@ -543,16 +486,10 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/orders/{{orderPublicId}}/cancel",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "{{orderPublicId}}",
-                "cancel"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderPublicId}}", "cancel"]
             },
-            "description": "Transici髇 a CANCELLED (libera inventario si aplica)."
+            "description": "Transici贸n a CANCELLED (libera inventario si aplica)."
           },
           "event": [
             {
@@ -582,12 +519,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
             },
             "description": "Crea otra orden para continuar el flujo.",
             "body": {
@@ -626,16 +559,10 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/orders/{{orderPublicId}}/ship",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "{{orderPublicId}}",
-                "ship"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderPublicId}}", "ship"]
             },
-            "description": "Transici髇 PAID -> SHIPPED (requiere haber pagado previamente)."
+            "description": "Transici贸n PAID -> SHIPPED (requiere haber pagado previamente)."
           },
           "event": [
             {
@@ -661,14 +588,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/orders/{{orderPublicId}}/history",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "{{orderPublicId}}",
-                "history"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{orderPublicId}}", "history"]
             },
             "description": "Historial de cambios de estado."
           },
@@ -687,10 +608,10 @@
       ]
     },
     {
-      "name": "4. B鷖queda y filtros",
+      "name": "4. B煤squeda y filtros",
       "item": [
         {
-          "name": "4.1 觬denes por cliente",
+          "name": "4.1 脫rdenes por cliente",
           "request": {
             "method": "GET",
             "header": [
@@ -701,14 +622,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/orders/customer/{{customerId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "customer",
-                "{{customerId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "customer", "{{customerId}}"]
             },
             "description": "Filtra por cliente."
           },
@@ -725,7 +640,7 @@
           ]
         },
         {
-          "name": "4.2 觬denes por estado",
+          "name": "4.2 脫rdenes por estado",
           "request": {
             "method": "GET",
             "header": [
@@ -736,14 +651,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/orders/status/SHIPPED",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "status",
-                "SHIPPED"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "status", "SHIPPED"]
             },
             "description": "Filtra por estado SHIPPED."
           },
@@ -760,7 +669,7 @@
           ]
         },
         {
-          "name": "4.3 B鷖queda avanzada",
+          "name": "4.3 B煤squeda avanzada",
           "request": {
             "method": "GET",
             "header": [
@@ -771,13 +680,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/orders/search",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "search"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "search"],
               "query": [
                 {
                   "key": "customerId",
@@ -820,13 +724,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/users/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "me"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
             },
             "description": "Datos del usuario autenticado."
           },
@@ -851,7 +750,7 @@
       "name": "6. Manejo de errores",
       "item": [
         {
-          "name": "6.1 Orden con producto inv醠ido",
+          "name": "6.1 Orden con producto inv谩lido",
           "request": {
             "method": "POST",
             "header": [
@@ -866,12 +765,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
             },
             "description": "Valida error al usar un producto inexistente.",
             "body": {
@@ -897,18 +792,14 @@
           ]
         },
         {
-          "name": "6.2 觬denes sin token",
+          "name": "6.2 脫rdenes sin token",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
             },
             "description": "Debe responder 401."
           },
@@ -936,14 +827,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/inventory/{{inventoryProductId}}/decrease",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "inventory",
-                "{{inventoryProductId}}",
-                "decrease"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "{{inventoryProductId}}", "decrease"],
               "query": [
                 {
                   "key": "quantity",
