@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/users/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/inventory/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/orders/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

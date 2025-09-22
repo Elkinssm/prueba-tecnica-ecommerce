@@ -5,6 +5,9 @@ import org.springframework.cache.CacheManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/admin/cache")
 @RequiredArgsConstructor
@@ -12,29 +15,37 @@ public class CacheController {
 
     private final CacheManager cacheManager;
 
-    @DeleteMapping("/clear/{cacheName}")
-    public ResponseEntity<String> clearCache(@PathVariable String cacheName) {
-        var cache = cacheManager.getCache(cacheName);
-        if (cache != null) {
-            cache.clear();
-            return ResponseEntity.ok("Cache '" + cacheName + "' cleared successfully");
-        }
-        return ResponseEntity.notFound().build();
-    }
-
-    @DeleteMapping("/clear/all")
-    public ResponseEntity<String> clearAllCaches() {
+    @PostMapping("/clear")
+    public ResponseEntity<Map<String, String>> clearAllCaches() {
         cacheManager.getCacheNames().forEach(cacheName -> {
-            var cache = cacheManager.getCache(cacheName);
-            if (cache != null) {
-                cache.clear();
+            if (cacheManager.getCache(cacheName) != null) {
+                cacheManager.getCache(cacheName).clear();
             }
         });
-        return ResponseEntity.ok("All caches cleared successfully");
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "All caches cleared successfully");
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/list")
-    public ResponseEntity<?> listCaches() {
-        return ResponseEntity.ok(cacheManager.getCacheNames());
+    @PostMapping("/clear/{cacheName}")
+    public ResponseEntity<Map<String, String>> clearCache(@PathVariable String cacheName) {
+        if (cacheManager.getCache(cacheName) != null) {
+            cacheManager.getCache(cacheName).clear();
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Cache '" + cacheName + "' cleared successfully");
+            return ResponseEntity.ok(response);
+        } else {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Cache '" + cacheName + "' not found");
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/names")
+    public ResponseEntity<Map<String, Object>> getCacheNames() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("cacheNames", cacheManager.getCacheNames());
+        return ResponseEntity.ok(response);
     }
 }

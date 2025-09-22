@@ -5,6 +5,8 @@ import org.example.pruebatecnicaecommerce.application.dto.OrderStatusHistoryResp
 import org.example.pruebatecnicaecommerce.domain.model.order.Order;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderRepository;
 import org.example.pruebatecnicaecommerce.domain.model.order.OrderStatus;
+import org.example.pruebatecnicaecommerce.infrastructure.persistence.order.JpaOrderStatusHistoryRepository;
+import org.example.pruebatecnicaecommerce.infrastructure.persistence.order.OrderStatusHistoryEntity;
 import org.example.pruebatecnicaecommerce.shared.error.OrderNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,261 +32,300 @@ import static org.mockito.Mockito.*;
 @DisplayName("Order Query Services Unit Tests")
 class OrderQueryServicesTest {
 
-    @Mock
-    private OrderRepository orderRepository;
+        @Mock
+        private OrderRepository orderRepository;
 
-    @InjectMocks
-    private GetOrderService getOrderService;
+        @Mock
+        private JpaOrderStatusHistoryRepository historyRepository;
 
-    @InjectMocks
-    private ListOrdersService listOrdersService;
+        @InjectMocks
+        private GetOrderService getOrderService;
 
-    @InjectMocks
-    private GetOrderStatusService getOrderStatusService;
+        @InjectMocks
+        private ListOrdersService listOrdersService;
 
-    @InjectMocks
-    private GetOrderHistoryService getOrderHistoryService;
+        @InjectMocks
+        private GetOrderStatusService getOrderStatusService;
 
-    private Order order1, order2, order3;
-    private final String PUBLIC_ORDER_ID = "ORD-12345";
-    private final UUID CUSTOMER_ID = UUID.randomUUID();
+        @InjectMocks
+        private GetOrderHistoryService getOrderHistoryService;
 
-    @BeforeEach
-    void setUp() {
-        order1 = Order.restore(
-                UUID.randomUUID(),
-                PUBLIC_ORDER_ID,
-                CUSTOMER_ID,
-                OrderStatus.CREATED,
-                Instant.now().minusSeconds(3600),
-                0);
+        private Order order1, order2, order3;
+        private final String PUBLIC_ORDER_ID = "ORD-12345";
+        private final UUID CUSTOMER_ID = UUID.randomUUID();
 
-        order2 = Order.restore(
-                UUID.randomUUID(),
-                "ORD-67890",
-                CUSTOMER_ID,
-                OrderStatus.PAID,
-                Instant.now().minusSeconds(1800),
-                0);
+        @BeforeEach
+        void setUp() {
+                order1 = Order.restore(
+                                UUID.randomUUID(),
+                                PUBLIC_ORDER_ID,
+                                CUSTOMER_ID,
+                                OrderStatus.CREATED,
+                                Instant.now().minusSeconds(3600),
+                                0);
 
-        order3 = Order.restore(
-                UUID.randomUUID(),
-                "ORD-11111",
-                UUID.randomUUID(),
-                OrderStatus.SHIPPED,
-                Instant.now().minusSeconds(900),
-                0);
-    }
+                order2 = Order.restore(
+                                UUID.randomUUID(),
+                                "ORD-67890",
+                                CUSTOMER_ID,
+                                OrderStatus.PAID,
+                                Instant.now().minusSeconds(1800),
+                                0);
 
-    // GetOrderService Tests
-    @Test
-    @DisplayName("GetOrderService: Should return order when found")
-    void getOrderService_shouldReturnOrderWhenFound() {
-        // Arrange
-        when(orderRepository.findByPublicId(eq(PUBLIC_ORDER_ID)))
-                .thenReturn(Optional.of(order1));
+                order3 = Order.restore(
+                                UUID.randomUUID(),
+                                "ORD-11111",
+                                UUID.randomUUID(),
+                                OrderStatus.SHIPPED,
+                                Instant.now().minusSeconds(900),
+                                0);
+        }
 
-        // Act
-        OrderResponse result = getOrderService.execute(PUBLIC_ORDER_ID);
+        // GetOrderService Tests
+        @Test
+        @DisplayName("GetOrderService: Should return order when found")
+        void getOrderService_shouldReturnOrderWhenFound() {
+                // Arrange
+                when(orderRepository.findByPublicId(eq(PUBLIC_ORDER_ID)))
+                                .thenReturn(Optional.of(order1));
 
-        // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(PUBLIC_ORDER_ID);
-        assertThat(result.getCustomerId()).isEqualTo(CUSTOMER_ID.toString());
-        assertThat(result.getStatus()).isEqualTo("CREATED");
+                // Act
+                OrderResponse result = getOrderService.execute(PUBLIC_ORDER_ID);
 
-        verify(orderRepository).findByPublicId(PUBLIC_ORDER_ID);
-    }
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getId()).isEqualTo(PUBLIC_ORDER_ID);
+                assertThat(result.getCustomerId()).isEqualTo(CUSTOMER_ID.toString());
+                assertThat(result.getStatus()).isEqualTo("CREATED");
 
-    @Test
-    @DisplayName("GetOrderService: Should throw exception when order not found")
-    void getOrderService_shouldThrowExceptionWhenOrderNotFound() {
-        // Arrange
-        String nonExistentOrderId = "NON-EXISTENT";
-        when(orderRepository.findByPublicId(eq(nonExistentOrderId)))
-                .thenReturn(Optional.empty());
+                verify(orderRepository).findByPublicId(PUBLIC_ORDER_ID);
+        }
 
-        // Act & Assert
-        assertThatThrownBy(() -> getOrderService.execute(nonExistentOrderId))
-                .isInstanceOf(OrderNotFoundException.class)
-                .hasMessage("Order not found with public ID: " + nonExistentOrderId);
+        @Test
+        @DisplayName("GetOrderService: Should throw exception when order not found")
+        void getOrderService_shouldThrowExceptionWhenOrderNotFound() {
+                // Arrange
+                String nonExistentOrderId = "NON-EXISTENT";
+                when(orderRepository.findByPublicId(eq(nonExistentOrderId)))
+                                .thenReturn(Optional.empty());
 
-        verify(orderRepository).findByPublicId(nonExistentOrderId);
-    }
+                // Act & Assert
+                assertThatThrownBy(() -> getOrderService.execute(nonExistentOrderId))
+                                .isInstanceOf(OrderNotFoundException.class)
+                                .hasMessage("Order not found with public ID: " + nonExistentOrderId);
 
-    // ListOrdersService Tests
-    @Test
-    @DisplayName("ListOrdersService: Should return all orders")
-    void listOrdersService_shouldReturnAllOrders() {
-        // Arrange
-        when(orderRepository.findAll())
-                .thenReturn(Arrays.asList(order1, order2, order3));
+                verify(orderRepository).findByPublicId(nonExistentOrderId);
+        }
 
-        // Act
-        List<OrderResponse> result = listOrdersService.execute();
+        // ListOrdersService Tests
+        @Test
+        @DisplayName("ListOrdersService: Should return all orders")
+        void listOrdersService_shouldReturnAllOrders() {
+                // Arrange
+                when(orderRepository.findAll())
+                                .thenReturn(Arrays.asList(order1, order2, order3));
 
-        // Assert
-        assertThat(result).hasSize(3);
-        assertThat(result).extracting(OrderResponse::getId)
-                .containsExactly(PUBLIC_ORDER_ID, "ORD-67890", "ORD-11111");
-        assertThat(result).extracting(OrderResponse::getStatus)
-                .containsExactly("CREATED", "PAID", "SHIPPED");
+                // Act
+                List<OrderResponse> result = listOrdersService.execute();
 
-        verify(orderRepository).findAll();
-    }
+                // Assert
+                assertThat(result).hasSize(3);
+                assertThat(result).extracting(OrderResponse::getId)
+                                .containsExactly(PUBLIC_ORDER_ID, "ORD-67890", "ORD-11111");
+                assertThat(result).extracting(OrderResponse::getStatus)
+                                .containsExactly("CREATED", "PAID", "SHIPPED");
 
-    @Test
-    @DisplayName("ListOrdersService: Should return empty list when no orders exist")
-    void listOrdersService_shouldReturnEmptyListWhenNoOrdersExist() {
-        // Arrange
-        when(orderRepository.findAll())
-                .thenReturn(Collections.emptyList());
+                verify(orderRepository).findAll();
+        }
 
-        // Act
-        List<OrderResponse> result = listOrdersService.execute();
+        @Test
+        @DisplayName("ListOrdersService: Should return empty list when no orders exist")
+        void listOrdersService_shouldReturnEmptyListWhenNoOrdersExist() {
+                // Arrange
+                when(orderRepository.findAll())
+                                .thenReturn(Collections.emptyList());
 
-        // Assert
-        assertThat(result).isEmpty();
+                // Act
+                List<OrderResponse> result = listOrdersService.execute();
 
-        verify(orderRepository).findAll();
-    }
+                // Assert
+                assertThat(result).isEmpty();
 
-    // GetOrderStatusService Tests
-    @Test
-    @DisplayName("GetOrderStatusService: Should return order status when found")
-    void getOrderStatusService_shouldReturnOrderStatusWhenFound() {
-        // Arrange
-        when(orderRepository.findByPublicId(eq(PUBLIC_ORDER_ID)))
-                .thenReturn(Optional.of(order1));
+                verify(orderRepository).findAll();
+        }
 
-        // Act
-        String result = getOrderStatusService.execute(PUBLIC_ORDER_ID);
+        // GetOrderStatusService Tests
+        @Test
+        @DisplayName("GetOrderStatusService: Should return order status when found")
+        void getOrderStatusService_shouldReturnOrderStatusWhenFound() {
+                // Arrange
+                when(orderRepository.findByPublicId(eq(PUBLIC_ORDER_ID)))
+                                .thenReturn(Optional.of(order1));
 
-        // Assert
-        assertThat(result).isEqualTo("CREATED");
+                // Act
+                String result = getOrderStatusService.execute(PUBLIC_ORDER_ID);
 
-        verify(orderRepository).findByPublicId(PUBLIC_ORDER_ID);
-    }
+                // Assert
+                assertThat(result).isEqualTo("CREATED");
 
-    @Test
-    @DisplayName("GetOrderStatusService: Should throw exception when order not found")
-    void getOrderStatusService_shouldThrowExceptionWhenOrderNotFound() {
-        // Arrange
-        String nonExistentOrderId = "NON-EXISTENT";
-        when(orderRepository.findByPublicId(eq(nonExistentOrderId)))
-                .thenReturn(Optional.empty());
+                verify(orderRepository).findByPublicId(PUBLIC_ORDER_ID);
+        }
 
-        // Act & Assert
-        assertThatThrownBy(() -> getOrderStatusService.execute(nonExistentOrderId))
-                .isInstanceOf(OrderNotFoundException.class)
-                .hasMessage("Order not found with public ID: " + nonExistentOrderId);
+        @Test
+        @DisplayName("GetOrderStatusService: Should throw exception when order not found")
+        void getOrderStatusService_shouldThrowExceptionWhenOrderNotFound() {
+                // Arrange
+                String nonExistentOrderId = "NON-EXISTENT";
+                when(orderRepository.findByPublicId(eq(nonExistentOrderId)))
+                                .thenReturn(Optional.empty());
 
-        verify(orderRepository).findByPublicId(nonExistentOrderId);
-    }
+                // Act & Assert
+                assertThatThrownBy(() -> getOrderStatusService.execute(nonExistentOrderId))
+                                .isInstanceOf(OrderNotFoundException.class)
+                                .hasMessage("Order not found with public ID: " + nonExistentOrderId);
 
-    @Test
-    @DisplayName("GetOrderStatusService: Should return different statuses correctly")
-    void getOrderStatusService_shouldReturnDifferentStatusesCorrectly() {
-        // Test PAID status
-        when(orderRepository.findByPublicId(eq("ORD-PAID")))
-                .thenReturn(Optional.of(order2));
+                verify(orderRepository).findByPublicId(nonExistentOrderId);
+        }
 
-        String paidStatus = getOrderStatusService.execute("ORD-PAID");
-        assertThat(paidStatus).isEqualTo("PAID");
+        @Test
+        @DisplayName("GetOrderStatusService: Should return different statuses correctly")
+        void getOrderStatusService_shouldReturnDifferentStatusesCorrectly() {
+                // Test PAID status
+                when(orderRepository.findByPublicId(eq("ORD-PAID")))
+                                .thenReturn(Optional.of(order2));
 
-        // Test SHIPPED status
-        when(orderRepository.findByPublicId(eq("ORD-SHIPPED")))
-                .thenReturn(Optional.of(order3));
+                String paidStatus = getOrderStatusService.execute("ORD-PAID");
+                assertThat(paidStatus).isEqualTo("PAID");
 
-        String shippedStatus = getOrderStatusService.execute("ORD-SHIPPED");
-        assertThat(shippedStatus).isEqualTo("SHIPPED");
+                // Test SHIPPED status
+                when(orderRepository.findByPublicId(eq("ORD-SHIPPED")))
+                                .thenReturn(Optional.of(order3));
 
-        verify(orderRepository).findByPublicId("ORD-PAID");
-        verify(orderRepository).findByPublicId("ORD-SHIPPED");
-    }
+                String shippedStatus = getOrderStatusService.execute("ORD-SHIPPED");
+                assertThat(shippedStatus).isEqualTo("SHIPPED");
 
-    // GetOrderHistoryService Tests
-    @Test
-    @DisplayName("GetOrderHistoryService: Should return history for CREATED order")
-    void getOrderHistoryService_shouldReturnHistoryForCreatedOrder() {
-        // Arrange
-        when(orderRepository.findByPublicId(eq(PUBLIC_ORDER_ID)))
-                .thenReturn(Optional.of(order1));
+                verify(orderRepository).findByPublicId("ORD-PAID");
+                verify(orderRepository).findByPublicId("ORD-SHIPPED");
+        }
 
-        // Act
-        List<OrderStatusHistoryResponse> result = getOrderHistoryService.execute(PUBLIC_ORDER_ID);
+        // GetOrderHistoryService Tests
+        @Test
+        @DisplayName("GetOrderHistoryService: Should return history for CREATED order")
+        void getOrderHistoryService_shouldReturnHistoryForCreatedOrder() {
+                // Arrange
+                when(orderRepository.findByPublicId(eq(PUBLIC_ORDER_ID)))
+                                .thenReturn(Optional.of(order1));
 
-        // Assert
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getStatus()).isEqualTo("CREATED");
-        assertThat(result.get(0).getPreviousStatus()).isNull();
-        assertThat(result.get(0).getChangedAt()).isNotNull();
+                // Mock empty history (no history entries found)
+                when(historyRepository.findByOrderIdOrderByChangedAtAsc(order1.getId()))
+                                .thenReturn(Collections.emptyList());
 
-        verify(orderRepository).findByPublicId(PUBLIC_ORDER_ID);
-    }
+                // Act
+                List<OrderStatusHistoryResponse> result = getOrderHistoryService.execute(PUBLIC_ORDER_ID);
 
-    @Test
-    @DisplayName("GetOrderHistoryService: Should return history for non-CREATED order")
-    void getOrderHistoryService_shouldReturnHistoryForNonCreatedOrder() {
-        // Arrange
-        when(orderRepository.findByPublicId(eq("ORD-PAID")))
-                .thenReturn(Optional.of(order2));
+                // Assert
+                assertThat(result).hasSize(1);
+                assertThat(result.get(0).getStatus()).isEqualTo("CREATED");
+                assertThat(result.get(0).getPreviousStatus()).isNull();
+                assertThat(result.get(0).getChangedAt()).isNotNull();
 
-        // Act
-        List<OrderStatusHistoryResponse> result = getOrderHistoryService.execute("ORD-PAID");
+                verify(orderRepository).findByPublicId(PUBLIC_ORDER_ID);
+        }
 
-        // Assert
-        assertThat(result).hasSize(2);
+        @Test
+        @DisplayName("GetOrderHistoryService: Should return history for non-CREATED order")
+        void getOrderHistoryService_shouldReturnHistoryForNonCreatedOrder() {
+                // Arrange
+                when(orderRepository.findByPublicId(eq("ORD-PAID")))
+                                .thenReturn(Optional.of(order2));
 
-        // First entry should be CREATED
-        assertThat(result.get(0).getStatus()).isEqualTo("CREATED");
-        assertThat(result.get(0).getPreviousStatus()).isNull();
+                // Mock history entities
+                OrderStatusHistoryEntity historyEntity1 = new OrderStatusHistoryEntity();
+                historyEntity1.setOrderId(order2.getId());
+                historyEntity1.setNewStatus(OrderStatus.CREATED);
+                historyEntity1.setPreviousStatus(null);
+                historyEntity1.setChangedAt(Instant.now().minusSeconds(3600));
 
-        // Second entry should be current status
-        assertThat(result.get(1).getStatus()).isEqualTo("PAID");
-        assertThat(result.get(1).getPreviousStatus()).isEqualTo("CREATED");
-        assertThat(result.get(1).getChangedAt()).isNotNull();
+                OrderStatusHistoryEntity historyEntity2 = new OrderStatusHistoryEntity();
+                historyEntity2.setOrderId(order2.getId());
+                historyEntity2.setNewStatus(OrderStatus.PAID);
+                historyEntity2.setPreviousStatus(OrderStatus.CREATED);
+                historyEntity2.setChangedAt(Instant.now());
 
-        verify(orderRepository).findByPublicId("ORD-PAID");
-    }
+                when(historyRepository.findByOrderIdOrderByChangedAtAsc(order2.getId()))
+                                .thenReturn(Arrays.asList(historyEntity1, historyEntity2));
 
-    @Test
-    @DisplayName("GetOrderHistoryService: Should throw exception when order not found")
-    void getOrderHistoryService_shouldThrowExceptionWhenOrderNotFound() {
-        // Arrange
-        String nonExistentOrderId = "NON-EXISTENT";
-        when(orderRepository.findByPublicId(eq(nonExistentOrderId)))
-                .thenReturn(Optional.empty());
+                // Act
+                List<OrderStatusHistoryResponse> result = getOrderHistoryService.execute("ORD-PAID");
 
-        // Act & Assert
-        assertThatThrownBy(() -> getOrderHistoryService.execute(nonExistentOrderId))
-                .isInstanceOf(OrderNotFoundException.class)
-                .hasMessage("Order not found with public ID: " + nonExistentOrderId);
+                // Assert
+                assertThat(result).hasSize(2);
 
-        verify(orderRepository).findByPublicId(nonExistentOrderId);
-    }
+                // First entry should be CREATED
+                assertThat(result.get(0).getStatus()).isEqualTo("CREATED");
+                assertThat(result.get(0).getPreviousStatus()).isNull();
 
-    @Test
-    @DisplayName("GetOrderHistoryService: Should handle SHIPPED order correctly")
-    void getOrderHistoryService_shouldHandleShippedOrderCorrectly() {
-        // Arrange
-        when(orderRepository.findByPublicId(eq("ORD-SHIPPED")))
-                .thenReturn(Optional.of(order3));
+                // Second entry should be current status
+                assertThat(result.get(1).getStatus()).isEqualTo("PAID");
+                assertThat(result.get(1).getPreviousStatus()).isEqualTo("CREATED");
+                assertThat(result.get(1).getChangedAt()).isNotNull();
 
-        // Act
-        List<OrderStatusHistoryResponse> result = getOrderHistoryService.execute("ORD-SHIPPED");
+                verify(orderRepository).findByPublicId("ORD-PAID");
+        }
 
-        // Assert
-        assertThat(result).hasSize(2);
+        @Test
+        @DisplayName("GetOrderHistoryService: Should throw exception when order not found")
+        void getOrderHistoryService_shouldThrowExceptionWhenOrderNotFound() {
+                // Arrange
+                String nonExistentOrderId = "NON-EXISTENT";
+                when(orderRepository.findByPublicId(eq(nonExistentOrderId)))
+                                .thenReturn(Optional.empty());
 
-        // First entry should be CREATED
-        assertThat(result.get(0).getStatus()).isEqualTo("CREATED");
-        assertThat(result.get(0).getPreviousStatus()).isNull();
+                // Act & Assert
+                assertThatThrownBy(() -> getOrderHistoryService.execute(nonExistentOrderId))
+                                .isInstanceOf(OrderNotFoundException.class)
+                                .hasMessage("Order not found with public ID: " + nonExistentOrderId);
 
-        // Second entry should be SHIPPED
-        assertThat(result.get(1).getStatus()).isEqualTo("SHIPPED");
-        assertThat(result.get(1).getPreviousStatus()).isEqualTo("CREATED");
+                verify(orderRepository).findByPublicId(nonExistentOrderId);
+        }
 
-        verify(orderRepository).findByPublicId("ORD-SHIPPED");
-    }
+        @Test
+        @DisplayName("GetOrderHistoryService: Should handle SHIPPED order correctly")
+        void getOrderHistoryService_shouldHandleShippedOrderCorrectly() {
+                // Arrange
+                when(orderRepository.findByPublicId(eq("ORD-SHIPPED")))
+                                .thenReturn(Optional.of(order3));
+
+                // Mock history entities
+                OrderStatusHistoryEntity historyEntity1 = new OrderStatusHistoryEntity();
+                historyEntity1.setOrderId(order3.getId());
+                historyEntity1.setNewStatus(OrderStatus.CREATED);
+                historyEntity1.setPreviousStatus(null);
+                historyEntity1.setChangedAt(Instant.now().minusSeconds(7200));
+
+                OrderStatusHistoryEntity historyEntity2 = new OrderStatusHistoryEntity();
+                historyEntity2.setOrderId(order3.getId());
+                historyEntity2.setNewStatus(OrderStatus.SHIPPED);
+                historyEntity2.setPreviousStatus(OrderStatus.CREATED);
+                historyEntity2.setChangedAt(Instant.now());
+
+                when(historyRepository.findByOrderIdOrderByChangedAtAsc(order3.getId()))
+                                .thenReturn(Arrays.asList(historyEntity1, historyEntity2));
+
+                // Act
+                List<OrderStatusHistoryResponse> result = getOrderHistoryService.execute("ORD-SHIPPED");
+
+                // Assert
+                assertThat(result).hasSize(2);
+
+                // First entry should be CREATED
+                assertThat(result.get(0).getStatus()).isEqualTo("CREATED");
+                assertThat(result.get(0).getPreviousStatus()).isNull();
+
+                // Second entry should be SHIPPED
+                assertThat(result.get(1).getStatus()).isEqualTo("SHIPPED");
+                assertThat(result.get(1).getPreviousStatus()).isEqualTo("CREATED");
+
+                verify(orderRepository).findByPublicId("ORD-SHIPPED");
+        }
 }
